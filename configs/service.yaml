@@ -1,0 +1,7 @@
+SERVICE:
+    SERVICE_IP: "0.0.0.0"
+    SERVICE_PORT: 5001
+    LOG_PATH: "logfile"
+
+    COLOR_LABELS: ["black", "blue", "brown", "green", "pink", "red", "silver", "white", "yellow"]
+    COLOR_MODEL: "models/color_model.h5"
