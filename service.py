@@ -12,7 +12,7 @@ import keras
 from keras.models import load_model
 
 from utils.parser import get_config
-from src.test_recognize import recognize
+from src.predict_color import predict
 
 # setup config
 cfg = get_config()
@@ -38,23 +38,31 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/predict-color', methods=['POST'])
+@app.route('/predict', methods=['POST'])
 def predict_color():
     if request.method ==  'POST':
         try:
-            file = request.files['file']
-            image_file = file.read()
-            image = cv2.imdecode(np.frombuffer(image_file, dtype=np.uint8), -1)
+            try:
+                file = request.files['file']
+                image_file = file.read()
+                image = cv2.imdecode(np.frombuffer(image_file, dtype=np.uint8), -1)
+                # predict color
+                my_color = predict(image, MODEL, COLOR_LABELS)
+            except Exception as e:
+                print(str(e))
+                print(str(traceback.print_exc()))
+                result = {'code': '609', 'status': RCODE.code_609}
 
-            my_color = recognize(image, MODEL, COLOR_LABELS)
-            result = {"color": my_color}
+                return jsonify(result)
 
+            result = {"code": "1000", "color": my_color}
             return jsonify(result)
+
         except Exception as e:
             logger.error(str(e))
             logger.error(str(traceback.print_exc()))
             result = {'code': '1001', 'status': RCODE.code_1001}
-        finally:
+
             return jsonify(result)
 
 if __name__ == '__main__':
