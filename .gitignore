@@ -133,10 +133,6 @@ dmypy.json
 
 .DS_Store
 
-# image
-*.jpg
-*.png
-
 # env
 myEnv/
 
