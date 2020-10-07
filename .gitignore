@@ -138,3 +138,6 @@ myEnv/
 
 # logfile
 logfile/
+
+# models
+models/

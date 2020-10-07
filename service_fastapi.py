@@ -7,25 +7,34 @@ import os
 
 import tensorflow as tf
 import keras 
-from keras.models import load_model
+from keras.models import model_from_json
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel
 
 from utils.parser import get_config
-from src.predict_color import predict
+from utils.utils import load_class_names
+from src.predict_car import predict
 
 # setup config
 cfg = get_config()
 cfg.merge_from_file('configs/service.yaml')
 cfg.merge_from_file('configs/rcode.yaml')
 
-MODEL = load_model(cfg.SERVICE.COLOR_MODEL)
-COLOR_LABELS = cfg.SERVICE.COLOR_LABELS
+with open(cfg.SERVICE.CAR_RECOG_JSON, 'r') as json_file:
+    model_json = json_file.read()
+
+# Load weights
+WEIGHTS = cfg.SERVICE.CAR_RECOG_WEIGHTS
+MODEL = model_from_json(model_json)
+MODEL.load_weights(WEIGHTS)
+
 HOST = cfg.SERVICE.SERVICE_IP
 PORT = cfg.SERVICE.SERVICE_PORT
 LOG_PATH = cfg.SERVICE.LOG_PATH
 RCODE = cfg.RCODE
+# create labels
+LABELS = load_class_names(cfg.SERVICE.CAR_RECOG_LABELS)
 
 # create logging
 if not os.path.exists(LOG_PATH):
@@ -43,13 +52,8 @@ class Prediction(BaseModel):
     code: str 
     color: str 
 
-# Define the main route
-@app.get('/')
-def root_route():
-    return {'error': 'Use Get /predict instead of the root route!'}
-
 @app.post('/predict', response_model=Prediction)
-async def predict_color(file: UploadFile = File(...)):
+async def predict_car(file: UploadFile = File(...)):
     if file.content_type.startswith('image/') is False:
         raise HTTPException(status_code=400, detail=f'File \'{file.filename}\' is not an image.')
 
@@ -59,9 +63,9 @@ async def predict_color(file: UploadFile = File(...)):
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
         # predict color
-        my_color = predict(image, MODEL, COLOR_LABELS)
+        car_name = predict(image, MODEL, LABELS)
 
-        result = {"code": "1000", "color": my_color}
+        result = {"code": "1000", "color": car_name}
         return result
 
     except Exception as e:
