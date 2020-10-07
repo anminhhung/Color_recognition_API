@@ -5,7 +5,9 @@ keras==2.4.3
 numpy==1.18.5
 flask_cors==3.0.9
 easydict==1.9.0
-fastapi
+fastapi==0.61.1
 pydantic
 uvicorn
 python-multipart==0.0.5
+torch==1.6.0
+torchvision==0.7.0

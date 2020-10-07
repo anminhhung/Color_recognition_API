@@ -141,3 +141,6 @@ logfile/
 
 # models
 models/
+
+# detectron2
+detectron2/

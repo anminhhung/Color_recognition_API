@@ -5,36 +5,45 @@ import logging
 import traceback
 import os
 
-import tensorflow as tf
-import keras 
-from keras.models import model_from_json
-
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel
 
 from utils.parser import get_config
 from utils.utils import load_class_names
-from src.predict_car import predict
+from src.vehicle_detection import predict
+
+from detectron2.engine import DefaultPredictor
+from detectron2.config import get_cfg as config_detectron
 
 # setup config
 cfg = get_config()
 cfg.merge_from_file('configs/service.yaml')
 cfg.merge_from_file('configs/rcode.yaml')
 
-with open(cfg.SERVICE.CAR_RECOG_JSON, 'r') as json_file:
-    model_json = json_file.read()
+path_weigth = cfg.SERVICE.DETECT_WEIGHT
+path_config = cfg.SERVICE.DETECT_CONFIG
+confidences_threshold = cfg.SERVICE.THRESHOLD
+num_of_class = cfg.SERVICE.NUMBER_CLASS
 
-# Load weights
-WEIGHTS = cfg.SERVICE.CAR_RECOG_WEIGHTS
-MODEL = model_from_json(model_json)
-MODEL.load_weights(WEIGHTS)
+# create labels
+classes = load_class_names(cfg.SERVICE.VEHICLE_CLASS)
 
+# set up detectron
+detectron = config_detectron()
+detectron.MODEL.DEVICE= cfg.SERVICE.DEVICE
+detectron.merge_from_file(path_config)
+detectron.MODEL.WEIGHTS = path_weigth
+
+detectron.MODEL.ROI_HEADS.SCORE_THRESH_TEST = confidences_threshold
+detectron.MODEL.ROI_HEADS.NUM_CLASSES = num_of_class
+
+PREDICTOR = DefaultPredictor(detectron)
+
+# create log_file, rcode
 HOST = cfg.SERVICE.SERVICE_IP
 PORT = cfg.SERVICE.SERVICE_PORT
 LOG_PATH = cfg.SERVICE.LOG_PATH
 RCODE = cfg.RCODE
-# create labels
-LABELS = load_class_names(cfg.SERVICE.CAR_RECOG_LABELS)
 
 # create logging
 if not os.path.exists(LOG_PATH):
@@ -50,7 +59,9 @@ app = FastAPI()
 # Define the Response
 class Prediction(BaseModel):
     code: str 
-    color: str 
+    vehicle_boxes: list
+    vehicle_scores: list 
+    vehicle_classes: list
 
 @app.post('/predict', response_model=Prediction)
 async def predict_car(file: UploadFile = File(...)):
@@ -62,10 +73,10 @@ async def predict_car(file: UploadFile = File(...)):
         image = np.fromstring(contents, np.uint8)
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
-        # predict color
-        car_name = predict(image, MODEL, LABELS)
+        # detect
+        list_boxes, list_scores, list_classes = predict(image, PREDICTOR)
 
-        result = {"code": "1000", "color": car_name}
+        result = {"code": "1000", "vehicle_boxes": list_boxes, "vehicle_scores": list_scores, "vehicle_classes": list_classes}
         return result
 
     except Exception as e:
