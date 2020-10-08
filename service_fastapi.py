@@ -25,8 +25,10 @@ if not os.path.exists('backup'):
     os.mkdir('backup')
 
 # create log_file, rcode
-HOST = cfg.SERVICE.SERVICE_IP
-PORT = cfg.SERVICE.SERVICE_PORT
+COLOR_URL = cfg.SERVICE.COLOR_URL
+DETECT_URL = cfg.SERVICE.DETECT_URL
+CAR_RECOG_URL = cfg.SERVICE.CAR_RECOG_URL
+print("COLOR_URL: ", COLOR_URL)
 LOG_PATH = cfg.SERVICE.LOG_PATH
 RCODE = cfg.RCODE
 
@@ -44,11 +46,12 @@ app = FastAPI()
 # Define the Response
 class Prediction(BaseModel):
     code: str 
-    vehicle_path: str
-    vehicle_score: float
-    vehicle_class: str
-    vehicle_color: str 
-    vehicle_name: str
+    vehicles: list
+    # vehicle_path: str
+    # vehicle_score: float
+    # vehicle_class: str
+    # vehicle_color: str 
+    # vehicle_name: str
 
 @app.post('/predict', response_model=Prediction)
 async def predict_car(file: UploadFile = File(...)):
@@ -61,34 +64,41 @@ async def predict_car(file: UploadFile = File(...)):
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
         # gen name
-        time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
         number = str(random.randint(0, 10000))
         img_name = time + '_' + number + '.jpg'
         img_path = os.path.join('backup', img_name)
         cv2.imwrite(img_path, image)
 
         # detect
-        detect_response = requests.post('http://0.0.0.0:5003/predict', files={"file": ("filename", open(img_path, "rb"), "image/jpeg")}).json()
+        detect_response = requests.post(DETECT_URL, files={"file": ("filename", open(img_path, "rb"), "image/jpeg")}).json()
         vehicle_paths = detect_response['vehicle_paths']
         vehicle_scores = detect_response['vehicle_scores']
         vehicle_classes = detect_response['vehicle_classes']
 
-        # color recognition
-        color_response = requests.post('http://0.0.0.0:5001/predict', files={"file": ("filename", open(vehicle_paths[0], "rb"), "image/jpeg")}).json()
-        vehicle_color  = color_response['color']
+        list_vehicle = []
+        cnt = 0
+        for vehicle_path in vehicle_paths:
+            # color recognition
+            color_response = requests.post(COLOR_URL, files={"file": ("filename", open(vehicle_path, "rb"), "image/jpeg")}).json()
+            vehicle_color  = color_response['color']
 
-        # car recognition
-        car_response = requests.post('http://0.0.0.0:5002/predict', files={"file": ("filename", open(vehicle_paths[0], "rb"), "image/jpeg")}).json()
-        vehicle_name = car_response['vehicle_name']
+            # car recognition
+            car_response = requests.post(CAR_RECOG_URL, files={"file": ("filename", open(vehicle_path, "rb"), "image/jpeg")}).json()
+            vehicle_name = car_response['vehicle_name']
 
-        result = {
-            "code": "1000", 
-            "vehicle_path": vehicle_paths[0], 
-            "vehicle_score": vehicle_scores[0], 
-            "vehicle_class": vehicle_classes[0],
-            "vehicle_color": vehicle_color,
-            "vehicle_name": vehicle_name
-        }
+            result = {
+                "vehicle_path": vehicle_paths, 
+                "vehicle_score": vehicle_scores[cnt], 
+                "vehicle_class": vehicle_classes[cnt],
+                "vehicle_color": vehicle_color,
+                "vehicle_name": vehicle_name
+            }
+
+            cnt += 1
+            list_vehicle.append(result)
+        
+        result = {"code": "1000", "vehicles": list_vehicle}
 
         return result
 

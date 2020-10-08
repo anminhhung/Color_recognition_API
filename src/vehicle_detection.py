@@ -22,7 +22,7 @@ def predict(image, predictor, list_labels):
     list_classes = []
 
     for i in range(len(classes)):
-        if (scores[i] > 0.5):
+        if (scores[i] > 0.6):
             for j in boxes[i]:
                 x = int(j[0])
                 y = int(j[1])
@@ -33,8 +33,8 @@ def predict(image, predictor, list_labels):
             class_id = list_labels[int(classes[i])]
 
             # store vehicle
-            vehicle_image = image[x: (x+w), y: (y+h), :]
-            time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+            vehicle_image = image[y: (y+h), x: (x+w), :]
+            time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
             number = str(random.randint(0, 10000))
             img_name = time + '_' + number + '.jpg'
             img_path = os.path.join('output_detect', img_name)
