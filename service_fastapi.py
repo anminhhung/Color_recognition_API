@@ -60,7 +60,7 @@ app = FastAPI()
 class Prediction(BaseModel):
     code: str 
     vehicle_boxes: list
-    vehicle_scores: list 
+    vehicle_scores: list
     vehicle_classes: list
 
 @app.post('/predict', response_model=Prediction)

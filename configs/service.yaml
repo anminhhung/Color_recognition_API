@@ -13,6 +13,6 @@ SERVICE:
     DETECT_WEIGHT: "models/detector.pth"
     DETECT_CONFIG: "detectron2/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml"
     THRESHOLD: 0.5
-    NUMBER_CLASS: 14
+    NUMBER_CLASS: 5
     VEHICLE_CLASS: "models/vehicle_classes.txt" 
     DEVICE: 'cpu'
