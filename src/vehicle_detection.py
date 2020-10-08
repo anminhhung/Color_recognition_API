@@ -7,7 +7,7 @@ import numpy as np
 import argparse
 import cv2
 
-def predict(image, predictor):
+def predict(image, predictor, list_labels):
     outputs = predictor(image)
 
     boxes = outputs['instances'].pred_boxes
@@ -27,7 +27,7 @@ def predict(image, predictor):
                 h = int(j[3]) - y
 
             score = float(scores[i])
-            class_id = int(classes[i])
+            class_id = list_labels[int(classes[i])]
             list_boxes.append([x, y, w, h])
             list_scores.append(score)
             list_classes.append(class_id)
