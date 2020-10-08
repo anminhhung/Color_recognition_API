@@ -88,7 +88,7 @@ async def predict_car(file: UploadFile = File(...)):
             vehicle_name = car_response['vehicle_name']
 
             result = {
-                "vehicle_path": vehicle_paths, 
+                "vehicle_path": vehicle_path, 
                 "vehicle_score": vehicle_scores[cnt], 
                 "vehicle_class": vehicle_classes[cnt],
                 "vehicle_color": vehicle_color,
