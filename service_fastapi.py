@@ -15,6 +15,10 @@ from src.vehicle_detection import predict
 from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg as config_detectron
 
+# create output_detect dir
+if not os.path.exists('output_detect'):
+    os.mkdir('output_detect')
+    
 # setup config
 cfg = get_config()
 cfg.merge_from_file('configs/service.yaml')
@@ -26,7 +30,7 @@ confidences_threshold = cfg.SERVICE.THRESHOLD
 num_of_class = cfg.SERVICE.NUMBER_CLASS
 
 # create labels
-classes = load_class_names(cfg.SERVICE.VEHICLE_CLASS)
+CLASSES = load_class_names(cfg.SERVICE.VEHICLE_CLASS)
 
 # set up detectron
 detectron = config_detectron()
@@ -59,7 +63,7 @@ app = FastAPI()
 # Define the Response
 class Prediction(BaseModel):
     code: str 
-    vehicle_boxes: list
+    vehicle_paths: list
     vehicle_scores: list
     vehicle_classes: list
 
@@ -74,9 +78,9 @@ async def predict_car(file: UploadFile = File(...)):
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
         # detect
-        list_boxes, list_scores, list_classes = predict(image, PREDICTOR)
+        list_paths, list_scores, list_classes = predict(image, PREDICTOR, CLASSES)
 
-        result = {"code": "1000", "vehicle_boxes": list_boxes, "vehicle_scores": list_scores, "vehicle_classes": list_classes}
+        result = {"code": "1000", "vehicle_paths": list_paths, "vehicle_scores": list_scores, "vehicle_classes": list_classes}
         return result
 
     except Exception as e:
