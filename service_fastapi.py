@@ -4,6 +4,9 @@ import time
 import logging
 import traceback
 import os
+import io
+import base64
+from PIL import Image
 
 import tensorflow as tf
 import keras 
@@ -14,6 +17,8 @@ from pydantic import BaseModel
 
 from utils.parser import get_config
 from src.predict_color import predict
+
+import uvicorn
 
 # setup config
 cfg = get_config()
@@ -58,6 +63,8 @@ async def predict_color(file: UploadFile = File(...)):
         image = np.fromstring(contents, np.uint8)
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
+        # image = Image.open(io.BytesIO(file)) 
+        # image= np.asarray(image)
         # predict color
         my_color = predict(image, MODEL, COLOR_LABELS)
 
@@ -69,3 +76,6 @@ async def predict_color(file: UploadFile = File(...)):
         logger.error(str(traceback.print_exc()))
         
         raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    uvicorn.run("service_fastapi:app", host="0.0.0.0", port=5001)

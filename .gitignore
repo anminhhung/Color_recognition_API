@@ -138,3 +138,9 @@ myEnv/
 
 # logfile
 logfile/
+
+# detectron2
+detectron2/
+
+# models
+models/
