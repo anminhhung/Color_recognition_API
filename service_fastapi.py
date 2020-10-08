@@ -4,59 +4,25 @@ import time
 import logging
 import traceback
 import os
-
-import tensorflow as tf
-import keras 
-from keras.models import load_model, model_from_json
+import requests
+import random
+from time import gmtime, strftime
+import uvicorn
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel
 
 from utils.parser import get_config
 from utils.utils import load_class_names, predict_all_feature
-from src.vehicle_detection import predict
-
-from detectron2.engine import DefaultPredictor
-from detectron2.config import get_cfg as config_detectron
 
 # setup config
 cfg = get_config()
 cfg.merge_from_file('configs/service.yaml')
 cfg.merge_from_file('configs/rcode.yaml')
 
-# set up detectron
-path_weigth = cfg.SERVICE.DETECT_WEIGHT
-path_config = cfg.SERVICE.DETECT_CONFIG
-confidences_threshold = cfg.SERVICE.THRESHOLD
-num_of_class = cfg.SERVICE.NUMBER_CLASS
-
-VEHICLE_CLASSES = load_class_names(cfg.SERVICE.VEHICLE_CLASS)
-
-detectron = config_detectron()
-detectron.MODEL.DEVICE= cfg.SERVICE.DEVICE
-detectron.merge_from_file(path_config)
-detectron.MODEL.WEIGHTS = path_weigth
-
-detectron.MODEL.ROI_HEADS.SCORE_THRESH_TEST = confidences_threshold
-detectron.MODEL.ROI_HEADS.NUM_CLASSES = num_of_class
-
-PREDICTOR = DefaultPredictor(detectron)
-############################
-
-# set up color recognition
-COLOR_MODEL = load_model(cfg.SERVICE.COLOR_MODEL)
-COLOR_LABELS = cfg.SERVICE.COLOR_LABELS
-############################
-
-# set up car recognition
-with open(cfg.SERVICE.CAR_RECOG_JSON, 'r') as json_file:
-    model_json = json_file.read()
-
-CAR_WEIGHTS = cfg.SERVICE.CAR_RECOG_WEIGHTS
-CAR_MODEL = model_from_json(model_json)
-CAR_MODEL.load_weights(CAR_WEIGHTS)
-CAR_LABELS = load_class_names(cfg.SERVICE.CAR_RECOG_LABELS)
-############################
+# create backup dir
+if not os.path.exists('backup'):
+    os.mkdir('backup')
 
 # create log_file, rcode
 HOST = cfg.SERVICE.SERVICE_IP
@@ -78,7 +44,7 @@ app = FastAPI()
 # Define the Response
 class Prediction(BaseModel):
     code: str 
-    vehicle_box: list
+    vehicle_path: str
     vehicle_score: float
     vehicle_class: str
     vehicle_color: str 
@@ -94,17 +60,32 @@ async def predict_car(file: UploadFile = File(...)):
         image = np.fromstring(contents, np.uint8)
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
+        # gen name
+        time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        number = str(random.randint(0, 10000))
+        img_name = time + '_' + number + '.jpg'
+        img_path = os.path.join('backup', img_name)
+        cv2.imwrite(img_path, image)
+
         # detect
-        vehicle_box, vehicle_score, vehicle_class, vehicle_color, vehicle_name = predict_all_feature(
-                                                                    image, PREDICTOR, CAR_MODEL, COLOR_MODEL,
-                                                                    CAR_LABELS, COLOR_LABELS, VEHICLE_CLASSES
-                                                                )
+        detect_response = requests.post('http://0.0.0.0:5003/predict', files={"file": ("filename", open(img_path, "rb"), "image/jpeg")}).json()
+        vehicle_paths = detect_response['vehicle_paths']
+        vehicle_scores = detect_response['vehicle_scores']
+        vehicle_classes = detect_response['vehicle_classes']
+
+        # color recognition
+        color_response = requests.post('http://0.0.0.0:5001/predict', files={"file": ("filename", open(vehicle_paths[0], "rb"), "image/jpeg")}).json()
+        vehicle_color  = color_response['color']
+
+        # car recognition
+        car_response = requests.post('http://0.0.0.0:5002/predict', files={"file": ("filename", open(vehicle_paths[0], "rb"), "image/jpeg")}).json()
+        vehicle_name = car_response['vehicle_name']
 
         result = {
             "code": "1000", 
-            "vehicle_box": vehicle_box, 
-            "vehicle_score": vehicle_score, 
-            "vehicle_class": vehicle_class,
+            "vehicle_path": vehicle_paths[0], 
+            "vehicle_score": vehicle_scores[0], 
+            "vehicle_class": vehicle_classes[0],
             "vehicle_color": vehicle_color,
             "vehicle_name": vehicle_name
         }
@@ -116,3 +97,6 @@ async def predict_car(file: UploadFile = File(...)):
         logger.error(str(traceback.print_exc()))
         
         raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    uvicorn.run("service_fastapi:app", host="0.0.0.0", port=5050)
