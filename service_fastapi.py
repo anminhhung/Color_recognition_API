@@ -31,6 +31,7 @@ CAR_RECOG_URL = cfg.SERVICE.CAR_RECOG_URL
 print("COLOR_URL: ", COLOR_URL)
 LOG_PATH = cfg.SERVICE.LOG_PATH
 RCODE = cfg.RCODE
+BACKUP = cfg.SERVICE.BACKUP_DIR
 
 # create logging
 if not os.path.exists(LOG_PATH):
@@ -59,16 +60,19 @@ async def predict_car(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=f'File \'{file.filename}\' is not an image.')
 
     try:
-        contents = await file.read()
-        image = np.fromstring(contents, np.uint8)
-        image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+        # contents = await file.read()
+        # image = np.fromstring(contents, np.uint8)
+        # image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
-        # gen name
-        time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
-        number = str(random.randint(0, 10000))
-        img_name = time + '_' + number + '.jpg'
-        img_path = os.path.join('backup', img_name)
-        cv2.imwrite(img_path, image)
+        # # gen name
+        # time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
+        # number = str(random.randint(0, 10000))
+        # img_name = time + '_' + number + '.jpg'
+        # img_path = os.path.join('backup', img_name)
+        # cv2.imwrite(img_path, image)
+        img_path = os.path.join(BACKUP, file.filename)
+        with open("demo.txt", "a+") as f:
+            f.write("{}\n".format(img_path))
 
         # detect
         detect_response = requests.post(DETECT_URL, files={"file": ("filename", open(img_path, "rb"), "image/jpeg")}).json()

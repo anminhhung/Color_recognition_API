@@ -144,3 +144,6 @@ models/
 
 # detectron2
 detectron2/
+
+# video
+*.mp4
