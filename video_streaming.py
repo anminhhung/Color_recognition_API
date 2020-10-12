@@ -31,8 +31,8 @@ def get_frame():
         cv2.imwrite(img_path, im)
 
         response = requests.post(URL, files={"file": (img_name, open(img_path, "rb"), "image/jpeg")}).json()
-        with open("demo.txt", "a+") as f:
-            f.write("{}\n".format(response))
+        # with open("demo.txt", "a+") as f:
+        #     f.write("{}\n".format(response))
 
         imgencode=cv2.imencode('.jpg',im)[1]
         
