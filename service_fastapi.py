@@ -71,8 +71,6 @@ async def predict_car(file: UploadFile = File(...)):
         # img_path = os.path.join('backup', img_name)
         # cv2.imwrite(img_path, image)
         img_path = os.path.join(BACKUP, file.filename)
-        with open("demo.txt", "a+") as f:
-            f.write("{}\n".format(img_path))
 
         # detect
         detect_response = requests.post(DETECT_URL, files={"file": ("filename", open(img_path, "rb"), "image/jpeg")}).json()
