@@ -7,6 +7,7 @@ import os
 import io
 import requests
 import random
+import json
 from time import gmtime, strftime
 
 from flask import Flask, render_template, Response, request, jsonify
@@ -22,6 +23,10 @@ cfg.merge_from_file('configs/rcode.yaml')
 # create backup dir
 if not os.path.exists('backup'):
     os.mkdir('backup')
+
+# create json dir
+if not os.path.exists('json_dir'):
+    os.mkdir('json_dir')
 
 # create log_file, rcode
 COLOR_URL = cfg.SERVICE.COLOR_URL
@@ -90,6 +95,15 @@ def predict_vehicle():
                 list_vehicle.append(result)
             
             result = {"code": "1000", "visual_path": visual_path, "vehicles": list_vehicle}
+            
+            json_name = visual_path.split('/')[-1]
+            json_name = json_name.solit('.')[0] + '.json'
+            json_path = os.path.join('json_dir', json_name)
+
+            with open(json_path, 'w') as f:
+                output_json = json.dumps(result)
+                f.write(output_json)
+
             return jsonify(result)
 
         except Exception as e:
@@ -99,13 +113,13 @@ def predict_vehicle():
 
             return jsonify(result)
 
-@app.route('/stream')
-def index():
-    return render_template('index.html')
+# @app.route('/stream')
+# def index():
+#     return render_template('index.html')
 
-@app.route('/video_feed')
-def video_feed():
-    return Response(get_frame(VIDEO_FILE, cfg.SERVICE.SERVICE_URL),mimetype='multipart/x-mixed-replace; boundary=frame')
+# @app.route('/video_feed')
+# def video_feed():
+#     return Response(get_frame(VIDEO_FILE, cfg.SERVICE.SERVICE_URL),mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5050)

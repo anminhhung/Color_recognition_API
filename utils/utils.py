@@ -38,3 +38,11 @@ def get_frame(video_file, URL):
             b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
 
     del(camera)
+
+def get_image(image_path):
+    image = cv2.imread(image_path)
+    imgencode=cv2.imencode('.jpg',image)[1]
+    stringData=imgencode.tostring()
+
+    yield (b'--frame\r\n'
+        b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
