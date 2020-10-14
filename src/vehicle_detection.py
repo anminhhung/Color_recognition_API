@@ -40,9 +40,15 @@ def predict(image, predictor, list_labels):
             img_path = os.path.join('output_detect', img_name)
             cv2.imwrite(img_path, vehicle_image)
 
+            # visual box
+            cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0), 1)
+
             # list_boxes.append([x, y, w, h])
             list_paths.append(img_path)
             list_scores.append(score)
             list_classes.append(class_id)
+    
+    visual_path = os.path.join('visual', strftime("%Y-%m-%d_%H:%M:%S", gmtime()) + '_' + str(random.randint(0, 10000)) + '.jpg')
+    cv2.imwrite(visual_path, image)
 
-    return list_paths, list_scores, list_classes
+    return visual_path, list_paths, list_scores, list_classes
