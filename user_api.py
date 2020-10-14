@@ -75,7 +75,8 @@ def predict_image():
                 output_json = json.dumps(result)
                 f.write(output_json)
             
-            return jsonify(result)
+            # return jsonify(result)
+            return Response(get_image(visual_path),mimetype='multipart/x-mixed-replace; boundary=frame')
 
         except Exception as e:
             logger.error(str(e))
@@ -84,6 +85,6 @@ def predict_image():
 
             return jsonify(result)
 
-@app.route('/stream/<string:path>"')
-def stream_image(path):
-    return Response(get_image(path),mimetype='multipart/x-mixed-replace; boundary=frame')
+# @app.route('/stream/<string:path>"')
+# def stream_image(path):
+#     return Response(get_image(path),mimetype='multipart/x-mixed-replace; boundary=frame')
