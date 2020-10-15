@@ -1,9 +1,11 @@
+  
 import cv2
 import numpy as np 
 import time
 import logging
 import traceback
 import os
+import uvicorn
 
 import tensorflow as tf
 import keras 
@@ -30,7 +32,7 @@ MODEL = model_from_json(model_json)
 MODEL.load_weights(WEIGHTS)
 
 HOST = cfg.SERVICE.SERVICE_IP
-PORT = cfg.SERVICE.SERVICE_PORT
+PORT = cfg.SERVICE.CAR_RECOG_PORT
 LOG_PATH = cfg.SERVICE.LOG_PATH
 RCODE = cfg.RCODE
 # create labels
@@ -50,7 +52,7 @@ app = FastAPI()
 # Define the Response
 class Prediction(BaseModel):
     code: str 
-    color: str 
+    vehicle_name: str 
 
 @app.post('/predict', response_model=Prediction)
 async def predict_car(file: UploadFile = File(...)):
@@ -65,7 +67,7 @@ async def predict_car(file: UploadFile = File(...)):
         # predict color
         car_name = predict(image, MODEL, LABELS)
 
-        result = {"code": "1000", "color": car_name}
+        result = {"code": "1000", "vehicle_name": car_name}
         return result
 
     except Exception as e:
@@ -73,3 +75,6 @@ async def predict_car(file: UploadFile = File(...)):
         logger.error(str(traceback.print_exc()))
         
         raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    uvicorn.run("vehicles_recog_api:app", host=HOST, port=PORT)
