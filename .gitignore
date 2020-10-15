@@ -147,3 +147,6 @@ detectron2/
 
 # video
 *.mp4
+
+# json dir
+json_dir/

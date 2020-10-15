@@ -39,8 +39,9 @@ def get_frame(video_file, URL):
 
     del(camera)
 
-def get_image(image_path):
-    image = cv2.imread(image_path)
+def get_image(image):
+    # image_path = os.path.join("backup", filename)
+    # image = cv2.imread(image_path)
     imgencode=cv2.imencode('.jpg',image)[1]
     stringData=imgencode.tostring()
 

@@ -58,14 +58,14 @@ def predict_image():
             cv2.imwrite(img_path, image)
 
             # call service
-            response = requests.post(SERVICE_URL, files={"file": ("filename", open(img_path, "rb"), "image/jpeg")}).json()
+            response = requests.post(SERVICE_URL, files={"file": (img_name, open(img_path, "rb"), "image/jpeg")}).json()
 
             visual_path = response['visual_path']
             vehicles = response['vehicles']
 
 
             json_name = visual_path.split('/')[-1]
-            json_name = json_name.solit('.')[0] + '.json'
+            json_name = json_name.split('.')[0] + '.json'
             json_path = os.path.join('json_dir', json_name)
 
             # create result 
@@ -75,8 +75,7 @@ def predict_image():
                 output_json = json.dumps(result)
                 f.write(output_json)
             
-            # return jsonify(result)
-            return Response(get_image(visual_path),mimetype='multipart/x-mixed-replace; boundary=frame')
+            return jsonify(result)
 
         except Exception as e:
             logger.error(str(e))
@@ -85,6 +84,17 @@ def predict_image():
 
             return jsonify(result)
 
-# @app.route('/stream/<string:path>"')
-# def stream_image(path):
-#     return Response(get_image(path),mimetype='multipart/x-mixed-replace; boundary=frame')
+@app.route('/stream/<path:filename>"')
+def stream_image(filename):
+    try:
+        image_path = os.path.join("backup", filename)
+        image = cv2.imread(image_path)
+    except Exception as e:
+        print(str(e))
+        print(str(traceback.print_exc()))
+        result = {'code': '609', 'status': RCODE.code_609}
+
+    return Response(get_image(image),mimetype='multipart/x-mixed-replace; boundary=frame')
+
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=5555)
