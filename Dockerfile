@@ -19,7 +19,11 @@ RUN add-apt-repository ppa:deadsnakes/ppa && \
 COPY . /Vehicle_detection
 
 RUN cd Vehicle_detection && \
-    pip3 install -r requirements.txt
+    pip3 install -r requirements.txt &&\
+    mkdir models &&\ 
+    cd models &&\
+    gdown --id 1vwXfXkvMwfwZfTO7k8vE4GteYzuyy7jW &&\
+    gdown --id 1SDaqVnbJgrWms8I9lmuFlwupqIsb0DQR
 
 WORKDIR /Vehicle_detection
 
