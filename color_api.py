@@ -28,7 +28,7 @@ cfg.merge_from_file('configs/rcode.yaml')
 MODEL = load_model(cfg.SERVICE.COLOR_MODEL)
 COLOR_LABELS = cfg.SERVICE.COLOR_LABELS
 HOST = cfg.SERVICE.SERVICE_IP
-PORT = cfg.SERVICE.SERVICE_PORT
+PORT = cfg.SERVICE.COLOR_PORT
 LOG_PATH = cfg.SERVICE.LOG_PATH
 RCODE = cfg.RCODE
 
@@ -78,4 +78,4 @@ async def predict_color(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    uvicorn.run("color_api:app", host="0.0.0.0", port=5001)
+    uvicorn.run("color_api:app", host=HOST, port=PORT)

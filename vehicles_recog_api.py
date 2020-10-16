@@ -31,7 +31,7 @@ MODEL = model_from_json(model_json)
 MODEL.load_weights(WEIGHTS)
 
 HOST = cfg.SERVICE.SERVICE_IP
-PORT = cfg.SERVICE.SERVICE_PORT
+PORT = cfg.SERVICE.CAR_RECOG_PORT
 LOG_PATH = cfg.SERVICE.LOG_PATH
 RCODE = cfg.RCODE
 # create labels
@@ -76,4 +76,4 @@ async def predict_car(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    uvicorn.run("car_recog_api:app", host="0.0.0.0", port=5002)
+    uvicorn.run("vehicles_recog_api:app", host=HOST, port=PORT)

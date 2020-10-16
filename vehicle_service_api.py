@@ -20,6 +20,10 @@ cfg = get_config()
 cfg.merge_from_file('configs/service.yaml')
 cfg.merge_from_file('configs/rcode.yaml')
 
+# create output_detect dir
+if not os.path.exists('output_detect'):
+    os.mkdir('output_detect')
+
 # create backup dir
 if not os.path.exists('backup'):
     os.mkdir('backup')
@@ -74,14 +78,18 @@ def predict_image():
             detect_response = requests.post(DETECT_URL, files={"file": ("filename", open(img_path, "rb"), "image/jpeg")}).json()
 
             visual_path = detect_response['visual_path']
-            vehicle_paths = detect_response['vehicle_paths']
+            vehicle_boxes = detect_response['vehicle_boxes']
             vehicle_scores = detect_response['vehicle_scores']
             vehicle_classes = detect_response['vehicle_classes']
             
             list_vehicle = []
             cnt = 0
-            for vehicle_path in vehicle_paths:
+            for vehicle_box in vehicle_boxes:
                 # color recognition
+                vehicle_image = image[vehicle_box[1]: (vehicle_box[1]+vehicle_box[3]), vehicle_box[0]: (vehicle_box[0]+vehicle_box[2]), :]
+                vehicle_path = os.path.join('output_detect', "output_detect.jpg")
+                cv2.imwrite(vehicle_path, vehicle_image)
+
                 color_response = requests.post(COLOR_URL, files={"file": ("filename", open(vehicle_path, "rb"), "image/jpeg")}).json()
                 vehicle_color  = color_response['color']
 
@@ -90,7 +98,7 @@ def predict_image():
                 vehicle_name = car_response['vehicle_name']
 
                 result = {
-                    "vehicle_path": vehicle_path, 
+                    # "vehicle_path": vehicle_path, 
                     "vehicle_score": vehicle_scores[cnt], 
                     "vehicle_class": vehicle_classes[cnt],
                     "vehicle_color": vehicle_color,
