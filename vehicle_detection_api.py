@@ -1,4 +1,3 @@
-
 import cv2
 import numpy as np 
 import time
@@ -16,10 +15,6 @@ from src.vehicle_detection import predict
 
 from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg as config_detectron
-
-# create output_detect dir
-if not os.path.exists('output_detect'):
-    os.mkdir('output_detect')
 
 # create visual dir
 if not os.path.exists('visual'):
@@ -70,7 +65,8 @@ app = FastAPI()
 class Prediction(BaseModel):
     code: str 
     visual_path: str
-    vehicle_paths: list
+    # vehicle_paths: list
+    vehicle_boxes: list
     vehicle_scores: list
     vehicle_classes: list
 
@@ -78,16 +74,17 @@ class Prediction(BaseModel):
 async def predict_car(file: UploadFile = File(...)):
     if file.content_type.startswith('image/') is False:
         raise HTTPException(status_code=400, detail=f'File \'{file.filename}\' is not an image.')
-
     try:
         contents = await file.read()
         image = np.fromstring(contents, np.uint8)
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
         # detect
-        visual_path, list_paths, list_scores, list_classes = predict(image, PREDICTOR, CLASSES)
+        visual_path, list_boxes, list_scores, list_classes = predict(image, PREDICTOR, CLASSES)
 
-        result = {"code": "1000", "visual_path": visual_path, "vehicle_paths": list_paths, "vehicle_scores": list_scores, "vehicle_classes": list_classes}
+        result = {"code": "1000", "visual_path": visual_path, "vehicle_boxes": list_boxes, "vehicle_scores": list_scores, "vehicle_classes": list_classes}
+        with open("demo.txt", "a+") as f:
+            f.write("{}\n".format(result))
         return result
 
     except Exception as e:
@@ -97,4 +94,4 @@ async def predict_car(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    uvicorn.run("vehicle_detection_api:app", host=HOST, port=PORT)
+    uvicorn.run("vehicles_detection_api:app", host=HOST, port=PORT)
