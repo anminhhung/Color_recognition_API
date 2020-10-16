@@ -18,7 +18,7 @@ SERVICE:
     VEHICLE_CLASS: "models/vehicle_classes.txt" 
     DEVICE: 'cpu'
 
-    DETECT_URL: 'http://0.0.0.0:5003/predict'
-    COLOR_URL: 'http://0.0.0.0:5001/predict'
-    CAR_RECOG_URL: 'http://0.0.0.0:5002/predict'
-    SERVICE_URL: 'http://0.0.0.0:5050/predict'
+    DETECT_URL: 'http://192.168.28.75:5003/predict'
+    COLOR_URL: 'http://192.168.28.75:5001/predict'
+    CAR_RECOG_URL: 'http://192.168.28.75:5002/predict'
+    # SERVICE_URL: 'http://0.0.0.0:5050/predict'
