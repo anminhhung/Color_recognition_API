@@ -9,7 +9,7 @@ SERVICE:
     COLOR_MODEL: "models/color_model.h5"
 
     CAR_RECOG_JSON: "models/MobileNets_car_recognition.json"
-    CAR_RECOG_WEIGHTS: "models/car_recognition_weights.h5"
+    CAR_RECOG_WEIGHTS: "models/car_recognition.h5"
     CAR_RECOG_LABELS: "models/car_recognition_labels.txt"
 
     DETECT_WEIGHT: "models/detector.pth"
