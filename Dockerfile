@@ -23,8 +23,9 @@ RUN cd Vehicle_detection && \
 
 WORKDIR /Vehicle_detection
 
-EXPOSE 5002
+RUN git clone https://github.com/facebookresearch/detectron2.git && \
+    python3 -m pip install -e detectron2
 
-# RUN git clone https://github.com/facebookresearch/detectron2.git && \
-#     python3 -m pip install -e detectron2
-RUN python3 -m pip install -e detectron2
+EXPOSE 5003
+
+CMD ["python3", "vehicle_detection_api.py"]

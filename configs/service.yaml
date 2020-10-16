@@ -1,7 +1,8 @@
 SERVICE:
     SERVICE_IP: "0.0.0.0"
-    SERVICE_PORT: 5001
+    DETECTION_PORT: 5003
     LOG_PATH: "logfile"
+    BACKUP_DIR: "backup"
 
     COLOR_LABELS: ["black", "blue", "brown", "green", "pink", "red", "silver", "white", "yellow"]
     COLOR_MODEL: "models/color_model.h5"
@@ -16,3 +17,8 @@ SERVICE:
     NUMBER_CLASS: 5
     VEHICLE_CLASS: "models/vehicle_classes.txt" 
     DEVICE: 'cpu'
+
+    DETECT_URL: 'http://0.0.0.0:5003/predict'
+    COLOR_URL: 'http://0.0.0.0:5001/predict'
+    CAR_RECOG_URL: 'http://0.0.0.0:5002/predict'
+    SERVICE_URL: 'http://0.0.0.0:5050/predict'

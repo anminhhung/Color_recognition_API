@@ -1,9 +1,11 @@
+
 import cv2
 import numpy as np 
 import time
 import logging
 import traceback
 import os
+import uvicorn
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel
@@ -18,6 +20,10 @@ from detectron2.config import get_cfg as config_detectron
 # create output_detect dir
 if not os.path.exists('output_detect'):
     os.mkdir('output_detect')
+
+# create visual dir
+if not os.path.exists('visual'):
+    os.mkdir('visual')
     
 # setup config
 cfg = get_config()
@@ -45,7 +51,7 @@ PREDICTOR = DefaultPredictor(detectron)
 
 # create log_file, rcode
 HOST = cfg.SERVICE.SERVICE_IP
-PORT = cfg.SERVICE.SERVICE_PORT
+PORT = cfg.SERVICE.DETECTION_PORT
 LOG_PATH = cfg.SERVICE.LOG_PATH
 RCODE = cfg.RCODE
 
@@ -63,6 +69,7 @@ app = FastAPI()
 # Define the Response
 class Prediction(BaseModel):
     code: str 
+    visual_path: str
     vehicle_paths: list
     vehicle_scores: list
     vehicle_classes: list
@@ -78,9 +85,9 @@ async def predict_car(file: UploadFile = File(...)):
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
         # detect
-        list_paths, list_scores, list_classes = predict(image, PREDICTOR, CLASSES)
+        visual_path, list_paths, list_scores, list_classes = predict(image, PREDICTOR, CLASSES)
 
-        result = {"code": "1000", "vehicle_paths": list_paths, "vehicle_scores": list_scores, "vehicle_classes": list_classes}
+        result = {"code": "1000", "visual_path": visual_path, "vehicle_paths": list_paths, "vehicle_scores": list_scores, "vehicle_classes": list_classes}
         return result
 
     except Exception as e:
@@ -88,3 +95,6 @@ async def predict_car(file: UploadFile = File(...)):
         logger.error(str(traceback.print_exc()))
         
         raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    uvicorn.run("vehicle_detection_api:app", host=HOST, port=PORT)
