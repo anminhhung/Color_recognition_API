@@ -32,4 +32,4 @@ RUN git clone https://github.com/facebookresearch/detectron2.git && \
 
 EXPOSE 5003
 
-CMD ["python3", "vehicle_detection_api.py"]
+CMD ["python3", "vehicles_detection_api.py"]
