@@ -68,16 +68,17 @@ def predict_image():
                 return jsonify(result)
 
             # save image
-            time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
-            number = str(random.randint(0, 10000))
-            img_name = time + '_' + number + '.jpg'
+            # time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
+            # number = str(random.randint(0, 10000))
+            # img_name = time + '_' + number + '.jpg'
+            img_name = 'result.jpg'
             img_path = os.path.join(BACKUP, img_name)
             cv2.imwrite(img_path, image)
 
             # detect
             detect_response = requests.post(DETECT_URL, files={"file": ("filename", open(img_path, "rb"), "image/jpeg")}).json()
 
-            visual_path = detect_response['visual_path']
+            #visual_path = detect_response['visual_path']
             vehicle_boxes = detect_response['vehicle_boxes']
             vehicle_scores = detect_response['vehicle_scores']
             vehicle_classes = detect_response['vehicle_classes']
@@ -105,15 +106,17 @@ def predict_image():
                     "vehicle_name": vehicle_name
                     }
 
+                cv2.rectangle(image, (vehicle_box[0], vehicle_box[1]), (vehicle_box[0]+vehicle_box[2], vehicle_box[1]+vehicle_box[3]), (255, 0, 0), 1)
                 cnt += 1
                 list_vehicle.append(result)
-
-            json_name = visual_path.split('/')[-1]
-            json_name = json_name.split('.')[0] + '.json'
+            
+            cv2.imwrite(img_path, image)
+            # json_name = visual_path.split('/')[-1]
+            json_name = img_name.split('.')[0] + '.json'
             json_path = os.path.join('json_dir', json_name)
 
             # create result 
-            result = {"code": "1000", "visual_path": visual_path, "json_path":json_path, "vehicles": list_vehicle}
+            result = {"code": "1000", "json_path":json_path, "vehicles": list_vehicle}
 
             with open(json_path, 'w') as f:
                 output_json = json.dumps(result)
@@ -128,10 +131,10 @@ def predict_image():
 
             return jsonify(result)
 
-@app.route('/stream/<path:filename>"')
-def stream_image(filename):
+@app.route('/stream')
+def stream_image():
     try:
-        image_path = os.path.join("backup", filename)
+        image_path = os.path.join(BACKUP, 'result.jpg')
         image = cv2.imread(image_path)
     except Exception as e:
         print(str(e))
