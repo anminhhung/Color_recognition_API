@@ -14,6 +14,6 @@ RUN cd vehicle_service && \
 
 WORKDIR /vehicle_service
 
-EXPOSE 5555
+EXPOSE 5050
 
-CMD ["python3", "vehicle_service_api.py"]
+CMD ["python3", "vehicles_service_api.py"]
