@@ -150,3 +150,6 @@ detectron2/
 
 # json dir
 json_dir/
+
+# output_Detect
+output_detect/
