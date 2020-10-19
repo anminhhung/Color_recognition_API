@@ -42,8 +42,9 @@ def get_frame(video_file, URL):
 def get_image(image):
     # image_path = os.path.join("backup", filename)
     # image = cv2.imread(image_path)
-    imgencode=cv2.imencode('.jpg',image)[1]
-    stringData=imgencode.tostring()
+    while True:
+        imgencode=cv2.imencode('.jpg',image)[1]
+        stringData=imgencode.tostring()
 
-    yield (b'--frame\r\n'
-        b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
+        yield (b'--frame\r\n'
+            b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
