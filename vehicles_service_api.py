@@ -135,13 +135,12 @@ def predict_image():
 def stream_image():
     try:
         image_path = os.path.join(BACKUP, 'result.jpg')
-        image = cv2.imread(image_path)
     except Exception as e:
         print(str(e))
         print(str(traceback.print_exc()))
         result = {'code': '609', 'status': RCODE.code_609}
 
-    return Response(get_image(image),mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(get_image(image_path),mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == "__main__":
     app.run(debug=False, host=HOST, port=PORT)
