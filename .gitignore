@@ -153,3 +153,6 @@ json_dir/
 
 # output_Detect
 output_detect/
+
+# backup
+backup/
