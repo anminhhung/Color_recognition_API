@@ -140,7 +140,12 @@ myEnv/
 logfile/
 
 # models
-models/
+models/car_recognition_labels.txt
+models/car_recognition_weights.h5 
+models/color_model.h5
+models/detector.pth 
+models/MobileNets_car_recognition.json
+models/vehicle_classes.txt
 
 # detectron2
 detectron2/
