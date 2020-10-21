@@ -1,0 +1,1 @@
+from src.detect.vehicle_detection_yolov4 import detect

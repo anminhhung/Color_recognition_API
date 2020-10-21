@@ -11,12 +11,12 @@ SERVICE:
     CAR_RECOG_WEIGHTS: "models/car_recognition_weights.h5"
     CAR_RECOG_LABELS: "models/car_recognition_labels.txt"
 
-    DETECT_WEIGHT: "models/detector.pth"
-    DETECT_CONFIG: "detectron2/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml"
-    THRESHOLD: 0.5
-    NUMBER_CLASS: 5
-    VEHICLE_CLASS: "models/vehicle_classes.txt" 
-    DEVICE: 'cpu'
+    # DETECT_WEIGHT: "models/detector.pth"
+    # DETECT_CONFIG: "detectron2/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml"
+    # THRESHOLD: 0.5
+    # NUMBER_CLASS: 5
+    # VEHICLE_CLASS: "models/vehicle_classes.txt" 
+    # DEVICE: 'cpu'
 
     DETECT_URL: 'http://0.0.0.0:5003/predict'
     COLOR_URL: 'http://0.0.0.0:5001/predict'

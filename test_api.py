@@ -25,7 +25,8 @@ def request_full_service(URL, path):
 
 if __name__ == '__main__':
     # test color api
-    request_color_api('http://192.168.28.75:5001/predict', image_path)
-    request_car_recog_api('http://192.168.28.75:5002/predict', image_path)
-    request_vehicles_detection_api('http://192.168.28.75:5003/predict', image_detect_path)
-    request_full_service('http://192.168.28.75:5555/predict', image_detect_path)
+    # request_color_api('http://192.168.28.75:5001/predict', image_path)
+    # request_car_recog_api('http://192.168.28.75:5002/predict', image_path)
+    # request_vehicles_detection_api('http://192.168.28.75:5003/predict', image_detect_path)
+    # request_full_service('http://192.168.28.75:5555/predict', image_detect_path)
+    request_vehicles_detection_api('http://0.0.0.0:5003/predict', image_detect_path)

@@ -11,10 +11,11 @@ from pydantic import BaseModel
 
 from utils.parser import get_config
 from utils.utils import load_class_names
-from src.vehicle_detection import predict
 
-from detectron2.engine import DefaultPredictor
-from detectron2.config import get_cfg as config_detectron
+# from detectron2.engine import DefaultPredictor
+# from detectron2.config import get_cfg as config_detectron
+
+from src import detect
 
 # create visual dir
 # if not os.path.exists('visual'):
@@ -24,25 +25,35 @@ from detectron2.config import get_cfg as config_detectron
 cfg = get_config()
 cfg.merge_from_file('configs/service.yaml')
 cfg.merge_from_file('configs/rcode.yaml')
-
-path_weigth = cfg.SERVICE.DETECT_WEIGHT
-path_config = cfg.SERVICE.DETECT_CONFIG
-confidences_threshold = cfg.SERVICE.THRESHOLD
-num_of_class = cfg.SERVICE.NUMBER_CLASS
+cfg.merge_from_file('configs/detect.yaml')
 
 # create labels
-CLASSES = load_class_names(cfg.SERVICE.VEHICLE_CLASS)
+CLASSES = load_class_names(cfg.DETECTOR.VEHICLE_CLASS)
 
+#####################################
 # set up detectron
-detectron = config_detectron()
-detectron.MODEL.DEVICE= cfg.SERVICE.DEVICE
-detectron.merge_from_file(path_config)
-detectron.MODEL.WEIGHTS = path_weigth
+# path_weigth = cfg.SERVICE.DETECT_WEIGHT
+# path_config = cfg.SERVICE.DETECT_CONFIG
+# confidences_threshold = cfg.SERVICE.THRESHOLD
+# num_of_class = cfg.SERVICE.NUMBER_CLASS
 
-detectron.MODEL.ROI_HEADS.SCORE_THRESH_TEST = confidences_threshold
-detectron.MODEL.ROI_HEADS.NUM_CLASSES = num_of_class
+# detectron = config_detectron()
+# detectron.MODEL.DEVICE= cfg.SERVICE.DEVICE
+# detectron.merge_from_file(path_config)
+# detectron.MODEL.WEIGHTS = path_weigth
 
-PREDICTOR = DefaultPredictor(detectron)
+# detectron.MODEL.ROI_HEADS.SCORE_THRESH_TEST = confidences_threshold
+# detectron.MODEL.ROI_HEADS.NUM_CLASSES = num_of_class
+
+# PREDICTOR = DefaultPredictor(detectron)
+#####################################
+
+# set up yolov4
+V4_WEIGHTS = cfg.DETECTOR.V4_WEIGHTS
+V4_CONFIGS = cfg.DETECTOR.V4_CFG
+NET = cv2.dnn.readNet(V4_WEIGHTS, V4_CONFIGS)
+LAYER_NAMES = NET.getLayerNames()
+OUTPUT_LAYERS = [LAYER_NAMES[i[0] - 1] for i in NET.getUnconnectedOutLayers()]
 
 # create log_file, rcode
 HOST = cfg.SERVICE.SERVICE_IP
@@ -54,7 +65,7 @@ RCODE = cfg.RCODE
 if not os.path.exists(LOG_PATH):
     os.mkdir(LOG_PATH)
 logging.basicConfig(filename=os.path.join(LOG_PATH, str(time.time())+".log"), filemode="w", level=logging.DEBUG, format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-console = logging.StreamHandler()
+console = logging.StreamHandler()   
 console.setLevel(logging.ERROR)
 logging.getLogger("").addHandler(console)
 logger = logging.getLogger(__name__)
@@ -78,8 +89,11 @@ async def predict_car(file: UploadFile = File(...)):
         image = np.fromstring(contents, np.uint8)
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
-        # detect
-        list_boxes, list_scores, list_classes = predict(image, PREDICTOR, CLASSES)
+        # detect detectron
+        # list_boxes, list_scores, list_classes = predict(image, PREDICTOR, CLASSES)
+
+        # detect yolov4
+        list_boxes, list_scores, list_classes = detect(image, NET, OUTPUT_LAYERS, CLASSES)
 
         result = {"code": "1000", "vehicle_boxes": list_boxes, "vehicle_scores": list_scores, "vehicle_classes": list_classes}
 

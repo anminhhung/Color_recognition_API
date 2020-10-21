@@ -144,3 +144,9 @@ models/
 
 # detectron2
 detectron2/
+
+# video
+*.mp4
+
+#json_dir
+json_dir/
