@@ -13,3 +13,4 @@ python-multipart==0.0.5
 aiofiles==0.5.0
 gdown
 scikit-learn==0.22.2
+pyyaml==5.3.1

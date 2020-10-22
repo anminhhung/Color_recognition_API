@@ -6,7 +6,6 @@ import warnings
 import cv2
 import numpy as np
 import argparse
-from PIL import Image
 
 from libs import preprocessing
 from libs import nn_matching

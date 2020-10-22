@@ -55,6 +55,7 @@ def get_image_tracking(image_path):
     # image = cv2.imread(image_path)
     while True:
         image = cv2.imread(image_path)
+        image = cv2.resize(image, (480, 270))
         imgencode=cv2.imencode('.jpg',image)[1]
         stringData=imgencode.tostring()
 

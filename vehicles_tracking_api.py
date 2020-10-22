@@ -19,8 +19,6 @@ from src import detect
 from src import run_detection, draw_tracking
 from utils.parser import get_config
 
-from PIL import Image
-
 from libs import preprocessing
 from libs import nn_matching
 from libs import Detection
