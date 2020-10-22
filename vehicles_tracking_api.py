@@ -83,7 +83,7 @@ def predict_video():
 
         # detection 
         # list_boxes, list_scores, list_classes = detect(frame, net, output_layers, classes)
-        detect_response = requests.post('http://0.0.0.0:5003/predict', files={"file": ("filename", open(image_detect_path, "rb"), "image/jpeg")}).json()
+        detect_response = requests.post(DETECT_URL, files={"file": ("filename", open(image_detect_path, "rb"), "image/jpeg")}).json()
         vehicle_boxes = detect_response['vehicle_boxes']
         vehicle_scores = detect_response['vehicle_scores']
         vehicle_classes = detect_response['vehicle_classes']
