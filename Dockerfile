@@ -24,9 +24,9 @@ RUN cd vehicles_tracking && \
     python3 -m pip install -U pip &&\
     # fix bug can not install skbuild
     python3 -m pip install -U setuptools &&\
-    pip3 install -r requirements.txt
-
-RUN cd images &&\
+    pip3 install -r requirements.txt &&\
+    cd .. &&\
+    cd images && \
     gdown --id 1MM1bBn-SVhQQOeKyPeiw-g40c0xYLMUH
 
 WORKDIR /vehicles_tracking
