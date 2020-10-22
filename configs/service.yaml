@@ -1,5 +1,6 @@
 SERVICE:
     SERVICE_IP: "0.0.0.0"
+    TRACKING_PORT: 5004
     SERVICE_PORT: 5050
     CAR_RECOG_PORT: 5002
     COLOR_PORT: 5001
@@ -28,3 +29,4 @@ SERVICE:
     DETECT_URL: 'http://0.0.0.0:5003/predict'
     COLOR_URL: 'http://0.0.0.0:5001/predict'
     CAR_RECOG_URL: 'http://0.0.0.0:5002/predict'
+    SERVICE_URL: 'http://0.0.0.0:5050/predict'

@@ -1,0 +1,12 @@
+DETECTOR:
+    # faster RCNN
+    DETECT_WEIGHT: "models/detector.pth"
+    DETECT_CONFIG: "detectron2/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml"
+    THRESHOLD: 0.5
+    NUMBER_CLASS: 5
+    VEHICLE_CLASS: "models/vehicle_classes.txt" 
+    DEVICE: 'cpu'
+
+    # YOLOv4
+    V4_WEIGHTS: "models/yolov4.weights"
+    V4_CFG: "models/yolov4.cfg"

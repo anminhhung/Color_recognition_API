@@ -146,6 +146,8 @@ models/color_model.h5
 models/detector.pth 
 models/MobileNets_car_recognition.json
 models/vehicle_classes.txt
+models/yolov4.cfg
+models/yolov4.weights
 
 # detectron2
 detectron2/
@@ -161,3 +163,6 @@ output_detect/
 
 # backup
 backup/
+
+# output tracking
+output_tracking

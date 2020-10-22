@@ -49,3 +49,14 @@ def get_image(image_path):
 
         yield (b'--frame\r\n'
             b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
+
+def get_image_tracking(image_path):
+    # image_path = os.path.join("backup", filename)
+    # image = cv2.imread(image_path)
+    while True:
+        image = cv2.imread(image_path)
+        imgencode=cv2.imencode('.jpg',image)[1]
+        stringData=imgencode.tostring()
+
+        yield (b'--frame\r\n'
+            b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
