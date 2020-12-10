@@ -1,5 +1,10 @@
 # vim: expandtab:ts=4:sw=4
 import cv2
+from shapely.geometry import Point, Polygon
+import numpy as np 
+
+COLOR_LIST = [(255,0,255), (255,100,0), (0,255,0), (139, 69, 19), (132, 112, 255), (0, 154, 205), (0, 255, 127), (238, 180, 180),
+                  (0, 100, 0), (238, 106, 167), (221, 160, 221), (0, 128, 128)]
 
 class TrackState:
     """
@@ -63,14 +68,28 @@ class Track:
 
     """
 
-    def __init__(self, mean, covariance, track_id, n_init, max_age,
-                 feature=None):
+    def __init__(self, mean, covariance, track_id, n_init, max_age, bbox=None, score=None, class_name=None, feature=None):
         self.mean = mean
         self.covariance = covariance
         self.track_id = track_id
         self.hits = 1
         self.age = 1
         self.time_since_update = 0
+
+        # add bbox, score, class_name
+        self.bbox = bbox
+        self.score = score
+        self.class_name = class_name
+
+        # number_centroid for each moi
+        self.list_moi = []
+
+        # moi 
+        self.moi = None
+
+        # point_in and point_out
+        self.point_in = None 
+        self.point_out = None 
 
         self.state = TrackState.Tentative
         self.features = []
@@ -124,7 +143,14 @@ class Track:
         self.age += 1
         self.time_since_update += 1
 
-    def update(self, kf, detection):
+    def check_in_polygon(self, center_point, polygon):
+        pts = Point(center_point[0], center_point[1])
+        if polygon.contains(pts):
+            return True
+        
+        return False
+
+    def update(self, kf, detection, roi_split_region, moi_threshold=5):
         """Perform Kalman filter measurement update step and update the feature
         cache.
 
@@ -140,22 +166,66 @@ class Track:
             self.mean, self.covariance, detection.to_xyah())
         self.features.append(detection.feature)
         
+        # add bounding box, class name, score
+        self.bbox = detection.to_tlbr()
+        self.score = detection.confidence
+        self.class_name = detection.cls
+
         x,y,w,h = self.to_tlwh()
         center_x = int(x+w/2)
         center_y = int(y+h/2)
-        self.track_line.append([center_x,center_y])
+        centroid = (center_x, center_y)
+
+        # check point in 
+        if self.point_in == None:
+            self.point_in = centroid
+        
+        self.point_out = centroid
+
+        self.track_line.append(centroid)
+
+        # check moi
+        if len(self.list_moi) == 0:
+            self.list_moi = [0] * len(roi_split_region)
+
+        cnt = 0
+        while cnt < len(roi_split_region):
+            polygon_ROI = roi_split_region[cnt]
+            polygon_ROI = Polygon(polygon_ROI)
+            if self.check_in_polygon(centroid, polygon_ROI):
+                self.list_moi[cnt] += 1
+
+            cnt += 1
+        
+        distribution = np.array(self.list_moi) / len(self.list_moi)
+        print("distribution: ", distribution)
+        # classify moi
+        self.moi = np.argmax(distribution) + 1 # b/c list number moi: 1,2,3,4,....,n
+        print("moi: ", self.moi)
+        # print("number voting for each moi: ", self.list_moi)
+
         self.hits += 1
         self.time_since_update = 0
         if self.state == TrackState.Tentative and self.hits >= self._n_init:
             self.state = TrackState.Confirmed
         
         
-    def mark_missed(self):
+    def mark_missed(self, image):
         """Mark this track as missed (no association at the current time step).
         """
         if self.state == TrackState.Tentative:
             self.state = TrackState.Deleted
+            # visualize before remove
+            try:
+                cv2.circle(image, (int(self.point_out[0]), int(self.point_out[1])), 12, COLOR_LIST[self.moi - 1], -1)
+            except:
+                pass
         elif self.time_since_update > self._max_age:
+            # visualize before remove
+            try:
+                cv2.circle(image, (int(self.point_out[0]), int(self.point_out[1])), 12, COLOR_LIST[self.moi - 1], -1)
+            except:
+                pass
             self.state = TrackState.Deleted
 
     def is_tentative(self):
@@ -169,6 +239,7 @@ class Track:
 
     def is_deleted(self):
         """Returns True if this track is dead and should be deleted."""
+
         return self.state == TrackState.Deleted
 
     def draw_track_line(self,image):

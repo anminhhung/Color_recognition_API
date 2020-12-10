@@ -5,7 +5,7 @@ from . import kalman_filter
 from . import linear_assignment
 from . import iou_matching
 from .track import Track
-
+import cv2
 
 class Tracker:
     """
@@ -37,7 +37,7 @@ class Tracker:
 
     """
 
-    def __init__(self, metric, max_iou_distance=0.7, max_age=30, n_init=3):
+    def __init__(self, metric, max_iou_distance=0.85, max_age=3, n_init=2):
         self.metric = metric
         self.max_iou_distance = max_iou_distance
         self.max_age = max_age
@@ -55,7 +55,7 @@ class Tracker:
         for track in self.tracks:
             track.predict(self.kf)
 
-    def update(self, detections):
+    def update(self, detections, roi_split_region, image):
         """Perform measurement update and track management.
 
         Parameters
@@ -71,9 +71,9 @@ class Tracker:
         # Update track set.
         for track_idx, detection_idx in matches:
             self.tracks[track_idx].update(
-                self.kf, detections[detection_idx])
+                self.kf, detections[detection_idx], roi_split_region)
         for track_idx in unmatched_tracks:
-            self.tracks[track_idx].mark_missed()
+            self.tracks[track_idx].mark_missed(image)
         for detection_idx in unmatched_detections:
             self._initiate_track(detections[detection_idx])
         self.tracks = [t for t in self.tracks if not t.is_deleted()]

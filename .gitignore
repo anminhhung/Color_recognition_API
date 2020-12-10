@@ -166,3 +166,12 @@ backup/
 
 # output tracking
 output_tracking
+
+# migrations
+migrations/
+
+# database
+*.db
+
+#mp4
+*.mp4

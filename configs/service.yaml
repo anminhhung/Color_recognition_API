@@ -7,6 +7,7 @@ SERVICE:
     DETECTION_PORT: 5003
     LOG_PATH: "logfile"
     BACKUP_DIR: "backup"
+    STORE_FRAME: "store_frame"
 
     COLOR_LABELS: ["black", "blue", "brown", "green", "pink", "red", "silver", "white", "yellow"]
     COLOR_MODEL: "models/color_model.h5"
