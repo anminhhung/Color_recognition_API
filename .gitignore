@@ -175,3 +175,5 @@ migrations/
 
 #mp4
 *.mp4
+
+store_frame/

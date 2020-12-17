@@ -46,6 +46,12 @@ class Tracker:
         self.kf = kalman_filter.KalmanFilter()
         self.tracks = []
         self._next_id = 1
+        
+        # number counted
+        self.counted_track = 0
+
+        # number counted each moi
+        self.list_counted_moi = []
 
     def predict(self):
         """Propagate track state distributions one time step forward.
@@ -64,6 +70,10 @@ class Tracker:
             A list of detections at the current time step.
 
         """
+        number_moi = len(roi_split_region)
+        if len(self.list_counted_moi) != number_moi:
+            self.list_counted_moi = [0] * number_moi
+
         # Run matching cascade.
         matches, unmatched_tracks, unmatched_detections = \
             self._match(detections)
@@ -73,10 +83,34 @@ class Tracker:
             self.tracks[track_idx].update(
                 self.kf, detections[detection_idx], roi_split_region)
         for track_idx in unmatched_tracks:
+            # moi, cnt = self.tracks[track_idx].mark_missed(image)
             self.tracks[track_idx].mark_missed(image)
+            # if moi != -1:
+            #     self.list_counted_moi[moi] += cnt 
+
         for detection_idx in unmatched_detections:
             self._initiate_track(detections[detection_idx])
-        self.tracks = [t for t in self.tracks if not t.is_deleted()]
+        
+        # self.tracks = [t for t in self.tracks if not t.is_deleted()]
+        
+        list_tracks = []
+        cnt = 0
+        for t in self.tracks:
+            if not t.is_deleted():
+                list_tracks.append(t)
+            else:
+                moi = t.moi 
+                print("moi of track: ", moi)
+                if moi != None:
+                    moi -= 1 
+                    self.list_counted_moi[moi] += 1
+                    cnt += 1
+                
+        self.tracks = list_tracks
+        self.counted_track += cnt
+ 
+        # print("number track: ", self.counted_track)
+        print("list counted moi: ", self.list_counted_moi)
 
         # Update distance metric.
         active_targets = [t.track_id for t in self.tracks if t.is_confirmed()]

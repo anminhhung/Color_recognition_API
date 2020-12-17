@@ -198,10 +198,10 @@ class Track:
             cnt += 1
         
         distribution = np.array(self.list_moi) / len(self.list_moi)
-        print("distribution: ", distribution)
+        # print("distribution: ", distribution)
         # classify moi
         self.moi = np.argmax(distribution) + 1 # b/c list number moi: 1,2,3,4,....,n
-        print("moi: ", self.moi)
+        # print("moi: ", self.moi)
         # print("number voting for each moi: ", self.list_moi)
 
         self.hits += 1
@@ -226,7 +226,9 @@ class Track:
                 cv2.circle(image, (int(self.point_out[0]), int(self.point_out[1])), 12, COLOR_LIST[self.moi - 1], -1)
             except:
                 pass
+
             self.state = TrackState.Deleted
+        
 
     def is_tentative(self):
         """Returns True if this track is tentative (unconfirmed).

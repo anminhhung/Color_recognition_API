@@ -19,7 +19,6 @@ from src import detect
 from app.tracking.counting import check_in_polygon
 from shapely.geometry import Point, Polygon
 
-
 def run_detection(image, list_boxes, list_scores, list_classes, encoder, cfg, roi_split_region):
     detections_in_ROI = []
 
@@ -57,6 +56,7 @@ def run_detection(image, list_boxes, list_scores, list_classes, encoder, cfg, ro
 def draw_tracking(image, tracker, detections, roi_split_region):
     tracker.predict()
     tracker.update(detections, roi_split_region, image)
+
     list_vehicles_info = []
 
     for track in tracker.tracks:
@@ -89,4 +89,4 @@ def draw_tracking(image, tracker, detections, roi_split_region):
     image_path = "output_tracking/video_frame.jpg"
     cv2.imwrite(image_path, image)
 
-    return image_path, list_vehicles_info
+    return image_path, list_vehicles_info, tracker

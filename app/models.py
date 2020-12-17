@@ -28,18 +28,6 @@ class BaseModel(db.Model):
 class Camera(BaseModel, db.Model):
     id = db.Column(db.Integer, primary_key=True) # id of camera
     cam_name = db.Column(db.String(10), index=True) # name of camera
-    info_cam = db.relationship('InfoCam', backref='infocam', lazy='dynamic')
-    info_moi = db.relationship('Moi', backref='infomoi', lazy='dynamic')
-    info_traffic = db.relationship('Traffic', backref='infotraffic', lazy='dynamic')
-
-    def __init__(Self, cam_name):
-        self.cam_name = cam_name
-    
-    def __repr__(self):
-        return '<Camera name: {}>'.format(self.cam_name)
-
-class InfoCam(BaseModel, db.Model):
-    id = db.Column(db.Integer, primary_key=True) # id of info
     sum_vehicle = db.Column(db.Integer, index=True) # total of vehicles
     sum_xe_may = db.Column(db.Integer, index=True) # total of xe may
     sum_ba_gac = db.Column(db.Integer, index=True) # total of xe ba gac
@@ -51,38 +39,61 @@ class InfoCam(BaseModel, db.Model):
     sum_bus = db.Column(db.Integer, index=True) # total of xe bus
     sum_tai = db.Column(db.Integer, index=True) # total of xe tai
     sum_container = db.Column(db.Integer, index=True) # total of container
-    cam_id = db.Column(db.Integer, db.ForeignKey('camera.id'), index=True)
-    
-    def __init__(self, vehicles, xemay, bagac, taxi, car, bantai, cuuthuong, xekhach, bus, tai, container):
-        self.sum_vehicle = vehicles
-        self.sum_xe_may = xemay
-        self.sum_ba_gac = bagac
-        self.sum_taxi = taxi 
-        self.sum_car = car
-        self.sum_ban_tai = bantai 
-        self.sum_cuu_thuong = cuuthuong
-        self.sum_xe_khach = xekhach
-        self.sum_bus = bus
-        self.sum_tai = tai
-        self.sum_container = container
+    info_moi = db.relationship('Moi', backref='infomoi', lazy='dynamic')
+    info_traffic = db.relationship('Traffic', backref='infotraffic', lazy='dynamic')
 
-    def __repr__(self):
-        return '<Number of vehicles: {}>'.format(self.sum_vehicle)
+    def __init__(self, cam_name, sum_vehicle, sum_xe_may, sum_ba_gac, sum_taxi, sum_car,\
+                 sum_ban_tai, sum_cuu_thuong, sum_xe_khach, sum_bus, sum_tai, sum_container):
+        self.cam_name = cam_name
+        self.sum_vehicle = sum_vehicle
+        self.sum_xe_may = sum_xe_may
+        self.sum_ba_gac = sum_ba_gac
+        self.sum_taxi = sum_taxi 
+        self.sum_car = sum_car
+        self.sum_ban_tai = sum_ban_tai 
+        self.sum_cuu_thuong = sum_cuu_thuong
+        self.sum_xe_khach = sum_xe_khach
+        self.sum_bus = sum_bus
+        self.sum_tai = sum_tai
+        self.sum_container = sum_container
+
+    def __repr__(self): 
+        return '<Camera name: {}>'.format(self.cam_name)
+
+# class InfoCam(BaseModel, db.Model):
+#     id = db.Column(db.Integer, primary_key=True) # id of info
+    # sum_vehicle = db.Column(db.Integer, index=True) # total of vehicles
+    # sum_xe_may = db.Column(db.Integer, index=True) # total of xe may
+    # sum_ba_gac = db.Column(db.Integer, index=True) # total of xe ba gac
+    # sum_taxi = db.Column(db.Integer, index=True) # total of taxi
+    # sum_car = db.Column(db.Integer, index=True) # total of car
+    # sum_ban_tai = db.Column(db.Integer, index=True) # total of xe ban tai
+    # sum_cuu_thuong = db.Column(db.Integer, index=True) # total of xe cuu thuong
+    # sum_xe_khach = db.Column(db.Integer, index=True) # total of xe khach
+    # sum_bus = db.Column(db.Integer, index=True) # total of xe bus
+    # sum_tai = db.Column(db.Integer, index=True) # total of xe tai
+    # sum_container = db.Column(db.Integer, index=True) # total of container
+    # cam_id = db.Column(db.Integer, db.ForeignKey('camera.id'), index=True)
+    
+    # def __init__(self, vehicles, xemay, bagac, taxi, car, bantai, cuuthuong, xekhach, bus, tai, container):
+    #     self.sum_vehicle = vehicles
+    #     self.sum_xe_may = xemay
+    #     self.sum_ba_gac = bagac
+    #     self.sum_taxi = taxi 
+    #     self.sum_car = car
+    #     self.sum_ban_tai = bantai 
+    #     self.sum_cuu_thuong = cuuthuong
+    #     self.sum_xe_khach = xekhach
+    #     self.sum_bus = bus
+    #     self.sum_tai = tai
+    #     self.sum_container = container
+
+    # def __repr__(self):
+    #     return '<Number of vehicles: {}>'.format(self.sum_vehicle)
 
 class Moi(BaseModel, db.Model):
     id = db.Column(db.Integer, primary_key=True) # id of MOI
     moi_name = db.Column(db.String(30), index=True) # name of MOI 
-    cam_id = db.Column(db.Integer, db.ForeignKey('camera.id'), index=True)
-    info_moi = db.relationship('InfoMoi', backref='infomoi', lazy='dynamic')
-
-    def __init__(self, moi_name):
-        self.moi_name = moi_name
-
-    def __repr__(self):
-        return '<Name of Moi: {}>'.format(self.moi_name)
-
-class InfoMoi(BaseModel, db.Model):
-    id = db.Column(db.Integer, primary_key=True) # id of info
     sum_vehicle = db.Column(db.Integer, index=True) # total of vehicles
     sum_xe_may = db.Column(db.Integer, index=True) # total of xe may
     sum_ba_gac = db.Column(db.Integer, index=True) # total of xe ba gac
@@ -94,23 +105,57 @@ class InfoMoi(BaseModel, db.Model):
     sum_bus = db.Column(db.Integer, index=True) # total of xe bus
     sum_tai = db.Column(db.Integer, index=True) # total of xe tai
     sum_container = db.Column(db.Integer, index=True) # total of container
-    moi_id = db.Column(db.Integer, db.ForeignKey('moi.id'), index=True)
+    cam_id = db.Column(db.Integer, db.ForeignKey('camera.id'), index=True)
 
-    def __init__(self, vehicles, xemay, bagac, taxi, car, bantai, cuuthuong, xekhach, bus, tai, container):
-        self.sum_vehicle = vehicles
-        self.sum_xe_may = xemay
-        self.sum_ba_gac = bagac
-        self.sum_taxi = taxi 
-        self.sum_car = car
-        self.sum_ban_tai = bantai 
-        self.sum_cuu_thuong = cuuthuong
-        self.sum_xe_khach = xekhach
-        self.sum_bus = bus
-        self.sum_tai = tai
-        self.sum_container = container
-    
+    def __init__(self, moi_name, sum_vehicle, sum_xe_may, sum_ba_gac, sum_taxi, sum_car,\
+                 sum_ban_tai, sum_cuu_thuong, sum_xe_khach, sum_bus, sum_tai, sum_container, cam_id):
+        self.moi_name = moi_name
+        self.sum_vehicle = sum_vehicle
+        self.sum_xe_may = sum_xe_may
+        self.sum_ba_gac = sum_ba_gac
+        self.sum_taxi = sum_taxi 
+        self.sum_car = sum_car
+        self.sum_ban_tai = sum_ban_tai 
+        self.sum_cuu_thuong = sum_cuu_thuong
+        self.sum_xe_khach = sum_xe_khach
+        self.sum_bus = sum_bus
+        self.sum_tai = sum_tai
+        self.sum_container = sum_container
+        self.cam_id = cam_id
+
     def __repr__(self):
-        return '<Number of vehicles: {}>'.format(self.sum_vehicle)
+        return '<Name of Moi: {}>'.format(self.moi_name)
+
+# class InfoMoi(BaseModel, db.Model):
+#     id = db.Column(db.Integer, primary_key=True) # id of info
+#     sum_vehicle = db.Column(db.Integer, index=True) # total of vehicles
+#     sum_xe_may = db.Column(db.Integer, index=True) # total of xe may
+#     sum_ba_gac = db.Column(db.Integer, index=True) # total of xe ba gac
+#     sum_taxi = db.Column(db.Integer, index=True) # total of taxi
+#     sum_car = db.Column(db.Integer, index=True) # total of car
+#     sum_ban_tai = db.Column(db.Integer, index=True) # total of xe ban tai
+#     sum_cuu_thuong = db.Column(db.Integer, index=True) # total of xe cuu thuong
+#     sum_xe_khach = db.Column(db.Integer, index=True) # total of xe khach
+#     sum_bus = db.Column(db.Integer, index=True) # total of xe bus
+#     sum_tai = db.Column(db.Integer, index=True) # total of xe tai
+#     sum_container = db.Column(db.Integer, index=True) # total of container
+#     moi_id = db.Column(db.Integer, db.ForeignKey('moi.id'), index=True)
+
+    # def __init__(self, vehicles, xemay, bagac, taxi, car, bantai, cuuthuong, xekhach, bus, tai, container):
+    #     self.sum_vehicle = vehicles
+    #     self.sum_xe_may = xemay
+    #     self.sum_ba_gac = bagac
+    #     self.sum_taxi = taxi 
+    #     self.sum_car = car
+    #     self.sum_ban_tai = bantai 
+    #     self.sum_cuu_thuong = cuuthuong
+    #     self.sum_xe_khach = xekhach
+    #     self.sum_bus = bus
+    #     self.sum_tai = tai
+    #     self.sum_container = container
+    
+    # def __repr__(self):
+    #     return '<Number of vehicles: {}>'.format(self.sum_vehicle)
 
 class Traffic(BaseModel, db.Model):
     id = db.Column(db.Integer, primary_key=True) # id of traffic

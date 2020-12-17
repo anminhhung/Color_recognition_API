@@ -32,7 +32,7 @@ from collections import deque
 
 from src import detect
 
-from app.models import db
+from app.models import db, Camera, Moi, Traffic, Vehicles, Frames, Type, Color
 
 # setup config
 cfg = get_config()
@@ -86,7 +86,21 @@ tracker = Blueprint('tracking', __name__)
 
 @tracker.route('/predict', methods=['GET'])
 def predict_video():
-    cap = cv2.VideoCapture("images/cam_06.mp4")
+    cam_name = 'cam6'
+    cap = cv2.VideoCapture("images/cam6.mp4")
+    # add cam_name to camera table
+    # try:
+    #     record = Camera(cam_name=cam_name)
+    #     db.session.add(record)
+    #     db.session.commit()
+    # except Exception as e:
+    #     print(e)
+    #     pass 
+    
+    # # query cam
+    # cam = Camera.query.get(cam_name)
+    # print("Cam: ", cam)
+
     while True:
         ret, frame = cap.read()
         _frame = frame.copy()
@@ -115,9 +129,48 @@ def predict_video():
 
         image, detections = run_detection(frame, vehicle_boxes, vehicle_scores, vehicle_classes, ENCODER, cfg, roi_split_region)
         # tracking
-        image, list_vehicle_info = draw_tracking(image, TRACKER, detections, roi_split_region)
+        image, list_vehicle_info, tracker = draw_tracking(image, TRACKER, detections, roi_split_region)
+
+        # query cam
+        print("##################")
+        cam = Camera.query.filter_by(cam_name=cam_name).first()
+        print("Cam: ", cam)
+        print("##################")
+
+        # add InfoCam db here
+        if tracker.counted_track != 0:
+            if cam == None:
+                record = Camera(cam_name=cam_name, sum_vehicle=tracker.counted_track, sum_xe_may=1, sum_ba_gac=1, sum_taxi=1, sum_car=1,\
+                                sum_ban_tai=1, sum_cuu_thuong=1, sum_xe_khach=1, sum_bus=1, sum_tai=1, sum_container=1)
+                db.session.add(record)
+                db.session.commit()
+            else:
+                if cam.sum_vehicle != tracker.counted_track:
+                    cam.sum_vehicle = tracker.counted_track
+                    db.session.commit()
         
-        # update to db
+        # add moi db:
+        if cam != None:
+            for i in range(len(tracker.list_counted_moi)):
+                cam_id = cam.id
+                moi = Moi.query.filter_by(cam_id=cam_id).first()
+                if moi == None:
+                    record = Moi(moi_name=str(i+1), sum_vehicle=tracker.list_counted_moi[i], sum_xe_may=1, sum_ba_gac=1, sum_taxi=1, sum_car=1,\
+                                sum_ban_tai=1, sum_cuu_thuong=1, sum_xe_khach=1, sum_bus=1, sum_tai=1, sum_container=1, cam_id=cam_id)
+                    db.session.add(record)
+                    db.session.commit()
+                else:
+                    moi = Moi.query.filter_by(cam_id=cam_id, moi_name=str(i+1)).first()
+                    if moi == None:
+                        record = Moi(moi_name=str(i+1), sum_vehicle=tracker.list_counted_moi[i], sum_xe_may=1, sum_ba_gac=1, sum_taxi=1, sum_car=1,\
+                                sum_ban_tai=1, sum_cuu_thuong=1, sum_xe_khach=1, sum_bus=1, sum_tai=1, sum_container=1, cam_id=cam_id)
+                        db.session.add(record)
+                        db.session.commit()
+                    else:
+                        if moi.sum_vehicle != tracker.list_counted_moi[i]:
+                            moi.sum_vehicle = tracker.list_counted_moi[i]
+                            db.session.commit()
+
         for vehicle_info in list_vehicle_info:
             try:
                 bbox = vehicle_info['bbox']
