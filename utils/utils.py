@@ -8,6 +8,8 @@ import sys
 from time import gmtime, strftime
 from shapely.geometry import Point, Polygon
 
+LOGO = 'app/static/figure/logo.png'
+
 def draw_ROI(img, moi, roi_split_region):
     color_list = [(255,0,255), (255,100,0), (0,255,0), (139, 69, 19), (132, 112, 255), (0, 154, 205), (0, 255, 127), (238, 180, 180),
                   (0, 100, 0), (238, 106, 167), (221, 160, 221), (0, 128, 128)]
@@ -88,6 +90,21 @@ def get_image_tracking(image_path):
         try:
             image = cv2.imread(image_path)
             image = cv2.resize(image, (480, 270))
+            imgencode=cv2.imencode('.jpg',image)[1]
+            stringData=imgencode.tostring()
+
+            yield (b'--frame\r\n'
+                b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
+        except:
+            pass
+
+def get_crop_track1(image_path):
+    # image_path = os.path.join("backup", filename)
+    # image = cv2.imread(image_path)
+    while True: 
+        try:
+            image = cv2.imread(image_path)
+            print("IMAGE SIZE: ", image.shape)
             imgencode=cv2.imencode('.jpg',image)[1]
             stringData=imgencode.tostring()
 

@@ -145,7 +145,6 @@ models/car_recognition_weights.h5
 models/color_model.h5
 models/detector.pth 
 models/MobileNets_car_recognition.json
-models/vehicle_classes.txt
 models/yolov4.cfg
 models/yolov4.weights
 
@@ -177,3 +176,5 @@ migrations/
 *.mp4
 
 store_frame/
+
+vehicle/

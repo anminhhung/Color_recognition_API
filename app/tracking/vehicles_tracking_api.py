@@ -6,6 +6,7 @@ import traceback
 import os
 import io
 import requests
+import imutils
 import random
 import json
 from time import gmtime, strftime
@@ -14,7 +15,7 @@ from datetime import datetime
 from flask import Flask, render_template, Response, request, jsonify, Blueprint
 
 from utils.parser import get_config
-from utils.utils import load_class_names, get_image, get_image_tracking
+from utils.utils import load_class_names, get_image, get_image_tracking, get_crop_track1
 
 from src import detect
 from src import run_detection, draw_tracking
@@ -32,7 +33,7 @@ from collections import deque
 
 from src import detect
 
-from app.models import db, Camera, Moi, Traffic, Vehicles, Frames, Type, Color
+from app.models import db, Camera, Moi, Vehicles, Frames, Type, Color
 
 # setup config
 cfg = get_config()
@@ -50,15 +51,24 @@ LOG_PATH = cfg.SERVICE.LOG_PATH
 RCODE = cfg.RCODE
 BACKUP = cfg.SERVICE.BACKUP_DIR
 STORE_FRAME = cfg.SERVICE.STORE_FRAME
+VEHICLE_IMAGE = cfg.SERVICE.VEHICLE_IMAGE
 
 # set up port 
 HOST = cfg.SERVICE.SERVICE_IP
 PORT = cfg.SERVICE.TRACKING_PORT
 
+# create labels
+CLASSES = load_class_names(cfg.DETECTOR.VEHICLE_CLASS)
+
 # setup deepsort
 ENCODER = gdet.create_box_encoder(cfg.DEEPSORT.MODEL, batch_size=4)
 METRIC = nn_matching.NearestNeighborDistanceMetric("cosine", cfg.DEEPSORT.MAX_COSINE_DISTANCE, cfg.DEEPSORT.NN_BUDGET)
 TRACKER = Tracker(METRIC)
+
+LIST_VEHICLE_OUT = []
+VIS_CURRENT_FRAME = None
+LOGO = 'app/static/figure/logo.png'
+LIST_VEHICLE_OUT_PATH = [LOGO] * 6
 
 # create output_detect dir
 TRACKING_DIR = 'output_tracking'
@@ -75,6 +85,9 @@ if not os.path.exists(LOG_PATH):
 if not os.path.exists(STORE_FRAME):
     os.mkdir(STORE_FRAME)
 
+if not os.path.exists(VEHICLE_IMAGE):
+    os.mkdir(VEHICLE_IMAGE)
+
 logging.basicConfig(filename=os.path.join(LOG_PATH, str(time.time())+".log"), filemode="w", level=logging.DEBUG, format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 console = logging.StreamHandler()
 console.setLevel(logging.ERROR)
@@ -84,44 +97,42 @@ logger = logging.getLogger(__name__)
 # app = Flask(__name__)
 tracker = Blueprint('tracking', __name__) 
 
-@tracker.route('/predict', methods=['GET'])
+@tracker.route('/track_video', methods=['GET'])
 def predict_video():
-    cam_name = 'cam6'
-    cap = cv2.VideoCapture("images/cam6.mp4")
-    # add cam_name to camera table
-    # try:
-    #     record = Camera(cam_name=cam_name)
-    #     db.session.add(record)
-    #     db.session.commit()
-    # except Exception as e:
-    #     print(e)
-    #     pass 
+    # cam_name = 'cam6'
+    cam_name = request.args.get('camname')
+    path_store_cam = os.path.join(STORE_FRAME, cam_name)
+    if not os.path.exists(path_store_cam):
+        os.mkdir(path_store_cam)
     
-    # # query cam
-    # cam = Camera.query.get(cam_name)
-    # print("Cam: ", cam)
+    # create subdir for each class in VEHICLE_IMAGE
+    if not os.path.exists(os.path.join(VEHICLE_IMAGE, cam_name)):
+        os.mkdir(os.path.join(VEHICLE_IMAGE, cam_name))
+        for class_name in CLASSES:
+            os.mkdir(os.path.join(VEHICLE_IMAGE, cam_name, class_name))
 
+    cap = cv2.VideoCapture("images/cam1.mp4")
+    cnt_frame = 0
     while True:
         ret, frame = cap.read()
         _frame = frame.copy()
-        now = datetime.now()
-        dt_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-        image_name = "image_" + dt_string + "_" + str(random.randint(0, 1000)) +  ".jpg"
-        print(image_name)
-        frame_path = os.path.join(STORE_FRAME, image_name)
+
+        image_name = "frame_" + str(cnt_frame) +  ".jpg"
+        print("frame number: ", image_name)
+        frame_path = os.path.join(path_store_cam, image_name)
+        VIS_CURRENT_FRAME = frame_path
         # store frame
         cv2.imwrite(frame_path, frame)
 
         image_detect_path = os.path.join(BACKUP, "video_frame.jpg")
 
         # draw cam's moi and roi 
-        moi = cfg.CAM6.MOI
-        roi_split_region = cfg.CAM6.ROI_SPLIT_REGION
+        moi = cfg.CAM1.MOI
+        roi_split_region = cfg.CAM1.ROI_SPLIT_REGION
         frame = draw_ROI(frame, moi, roi_split_region)
         cv2.imwrite(image_detect_path, frame)
 
         # detection 
-        # list_boxes, list_scores, list_classes = detect(frame, net, output_layers, classes)
         detect_response = requests.post(DETECT_URL, files={"file": ("filename", open(image_detect_path, "rb"), "image/jpeg")}).json()
         vehicle_boxes = detect_response['vehicle_boxes']
         vehicle_scores = detect_response['vehicle_scores']
@@ -129,8 +140,18 @@ def predict_video():
 
         image, detections = run_detection(frame, vehicle_boxes, vehicle_scores, vehicle_classes, ENCODER, cfg, roi_split_region)
         # tracking
-        image, list_vehicle_info, tracker = draw_tracking(image, TRACKER, detections, roi_split_region)
+        image, list_vehicle_info, tracker = draw_tracking(image, TRACKER, detections, roi_split_region, cnt_frame, cam_name)
 
+        LIST_VEHICLE_OUT = tracker.que_vehicle_out
+        print("##################")
+        for i in range(len(LIST_VEHICLE_OUT)):
+            LIST_VEHICLE_OUT_PATH[i] = LIST_VEHICLE_OUT[i].path_image
+            crop_img_vehicle = cv2.imread(LIST_VEHICLE_OUT_PATH[i])
+            crop_img_vehicle = imutils.resize(crop_img_vehicle, width=50)
+            cv2.imwrite("vehicle/crop{}/vehicle.jpg".format(i+1), crop_img_vehicle)
+        
+        print("len list vehicle out path: ", LIST_VEHICLE_OUT_PATH)
+        print("##################")
         # query cam
         print("##################")
         cam = Camera.query.filter_by(cam_name=cam_name).first()
@@ -145,7 +166,7 @@ def predict_video():
                 db.session.add(record)
                 db.session.commit()
             else:
-                if cam.sum_vehicle != tracker.counted_track:
+                if cam.sum_vehicle <= tracker.counted_track:
                     cam.sum_vehicle = tracker.counted_track
                     db.session.commit()
         
@@ -167,43 +188,129 @@ def predict_video():
                         db.session.add(record)
                         db.session.commit()
                     else:
-                        if moi.sum_vehicle != tracker.list_counted_moi[i]:
+                        if moi.sum_vehicle <= tracker.list_counted_moi[i]:
                             moi.sum_vehicle = tracker.list_counted_moi[i]
                             db.session.commit()
+        
+        # add vehicle db
+        if cam != None:
+            for track in tracker.tracks:
+                bbox = track.bbox
+                cam_id = cam.id
+                vehicle_id = track.track_id
+                vehicle = Vehicles.query.filter_by(number_track=vehicle_id).first()
+                if vehicle == None:
+                    if track.point_in != None:
+                        point_in = "{},{}".format(track.point_in[0], track.point_in[1])
+                    else:
+                        point_in = "0,0"
+                    if track.point_out != None:
+                        point_out = "{},{}".format(track.point_out[0], track.point_out[1])
+                    else:
+                        point_out = "0,0"
+                    
+                    if track.class_name != None:
+                        record = Vehicles(vehicle_name=track.class_name, vehicle_score=track.score, vehicle_path=track.path_image, number_track=track.track_id, \
+                                        point_in=point_in, point_out=point_out, frame_in=track.frame_in, frame_out=track.frame_out, cam_id=cam_id)
+                        db.session.add(record)
+                        db.session.commit()
 
-        for vehicle_info in list_vehicle_info:
-            try:
-                bbox = vehicle_info['bbox']
-                str_bbox = "{} {} {} {}".format(int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
-                class_name = vehicle_info['class_name']
+                        # add frames db
+                        # bbox = track.bbox
+                        bbox = "{},{},{},{}".format(int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
+                        record = Frames(frame_number=cnt_frame, frame_path=track.frame_path, bbox=bbox, vehicle_id=vehicle_id)
+                        db.session.add(record)
+                        db.session.commit()
+ 
+                else:
+                    if track.point_out != None:
+                        point_out = "{},{}".format(track.point_out[0], track.point_out[1])
+                    else:
+                        point_out = "0,0"
 
-                # vehicle image
-                vehicle_image = _frame[int(bbox[1]):int(bbox[3]), int(bbox[0]):int(bbox[2])]
-                vehicle_image_path = os.path.join(TRACKING_DIR, "vehicle.jpg")
-                cv2.imwrite(vehicle_image_path, vehicle_image)
-
-                # attribute recognition
-                car_response = requests.post(CAR_RECOG_URL, files={"file": ("filename", open(vehicle_image_path, "rb"), "image/jpeg")}).json()
-                attribute = car_response['vehicle_name']
-
-                # color recognition
-                color_response = requests.post(COLOR_URL, files={"file": ("filename", open(vehicle_image_path, "rb"), "image/jpeg")}).json()
-                color  = color_response['color']
+                    if track.class_name != None:
+                        vehicle.vehicle_name = track.class_name
+                        vehicle.vehicle_score = track.score
+                        vehicle.vehicle_path = track.path_image
+                        vehicle.point_out = point_out
+                        vehicle.frame_out = track.frame_out        
+                        db.session.commit()
                 
-                # add record to db
-                # record = Vehicle(path=frame_path, name=class_name, box=str_bbox, 
-                #                 attribute=attribute, color=color)
-                # db.session.add(record)
-                # db.session.commit()
+                        # add frames db
+                        # bbox = track.bbox
+                        # print("frame path: ", track.frame_path)
+                        bbox = "{},{},{},{}".format(int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
+                        record = Frames(frame_number=cnt_frame, frame_path=track.frame_path, bbox=bbox, vehicle_id=vehicle_id)
+                        db.session.add(record)
+                        db.session.commit()
+                
+                if track.flag_attribute == True:
+                    # attribute recognition
+                    car_response = requests.post(CAR_RECOG_URL, files={"file": ("filename", open(track.path_image, "rb"), "image/jpeg")}).json()
+                    attribute = car_response['vehicle_name']
+                    car_type = Type.query.filter_by(vehicle_id=vehicle_id).first()
+                    if car_type == None:
+                        # add type table
+                        record = Type(vehicle_type=attribute, vehicle_id=vehicle_id)
+                        db.session.add(record)
+                        db.session.commit()
+                    else:
+                        car_type.vehicle_type = attribute
+                        db.session.commit()
 
-            except Exception as e:
-                logger.error(str(e))
-                logger.error(str(traceback.print_exc()))
+                    # color recognition
+                    color_response = requests.post(COLOR_URL, files={"file": ("filename", open(track.path_image, "rb"), "image/jpeg")}).json()
+                    color  = color_response['color']
+                    car_color = Color.query.filter_by(vehicle_id=vehicle_id).first()
+                    if car_color == None:
+                        # add color table
+                        record = Color(vehicle_color=color, vehicle_id=vehicle_id)
+                        db.session.add(record)
+                        db.session.commit()
+                    else:
+                        car_color.vehicle_color = color
+                        db.session.commit()
+
+                    print("add attribute")
+
+
+        # for vehicle_info in list_vehicle_info:
+        #     try:
+        #         bbox = vehicle_info['bbox']
+        #         str_bbox = "{} {} {} {}".format(int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
+        #         class_name = vehicle_info['class_name']
+
+        #         # vehicle image
+        #         vehicle_image = _frame[int(bbox[1]):int(bbox[3]), int(bbox[0]):int(bbox[2])]
+        #         vehicle_image_path = os.path.join(TRACKING_DIR, "vehicle.jpg")
+        #         cv2.imwrite(vehicle_image_path, vehicle_image)
+
+        #         # attribute recognition
+        #         car_response = requests.post(CAR_RECOG_URL, files={"file": ("filename", open(vehicle_image_path, "rb"), "image/jpeg")}).json()
+        #         attribute = car_response['vehicle_name']
+
+        #         # color recognition
+        #         color_response = requests.post(COLOR_URL, files={"file": ("filename", open(vehicle_image_path, "rb"), "image/jpeg")}).json()
+        #         color  = color_response['color']
+
+                # add type table
+                # if cam != None:
+                #     record = Vehicle(path=frame_path, name=class_name, box=str_bbox, 
+                #                     attribute=attribute, color=color)
+                #     db.session.add(record)
+                #     db.session.commit()
+
+            # except Exception as e:
+            #     logger.error(str(e))
+            #     logger.error(str(traceback.print_exc()))
+            #     pass
                 # result = {'code': '1001', 'status': RCODE.code_1001}
+        
+        cnt_frame += 1
 
     return jsonify(result='done')
 
-@tracker.route('/stream')
+@tracker.route('/stream1')
 def stream_image():
     try:
         image_path = os.path.join(TRACKING_DIR, 'video_frame.jpg')
@@ -213,6 +320,21 @@ def stream_image():
         result = {'code': '609', 'status': RCODE.code_609}
 
     return Response(get_image_tracking(image_path),mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@tracker.route('/vehicle/<number_vehicle>')
+def stream_vehicle1(number_vehicle):
+    try:
+        image_path = "vehicle/crop{}/vehicle.jpg".format(number_vehicle)
+        
+        print("IMG_PATH vehicle1: ", image_path)
+
+    except Exception as e:
+        print(str(e))
+        print(str(traceback.print_exc()))
+        result = {'code': '609', 'status': RCODE.code_609}
+
+    return Response(get_crop_track1(image_path),mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # if __name__ == "__main__":
 #     app.run(debug=False, host=HOST, port=PORT)

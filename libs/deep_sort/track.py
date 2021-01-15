@@ -2,6 +2,15 @@
 import cv2
 from shapely.geometry import Point, Polygon
 import numpy as np 
+from utils.parser import get_config
+import os
+
+# setup config
+cfg = get_config()
+cfg.merge_from_file('configs/service.yaml')
+
+VEHICLE_IMAGE = cfg.SERVICE.VEHICLE_IMAGE
+STORE_FRAME = cfg.SERVICE.STORE_FRAME
 
 COLOR_LIST = [(255,0,255), (255,100,0), (0,255,0), (139, 69, 19), (132, 112, 255), (0, 154, 205), (0, 255, 127), (238, 180, 180),
                   (0, 100, 0), (238, 106, 167), (221, 160, 221), (0, 128, 128)]
@@ -68,7 +77,7 @@ class Track:
 
     """
 
-    def __init__(self, mean, covariance, track_id, n_init, max_age, bbox=None, score=None, class_name=None, feature=None):
+    def __init__(self, mean, covariance, track_id, n_init, max_age, feature=None):
         self.mean = mean
         self.covariance = covariance
         self.track_id = track_id
@@ -76,10 +85,13 @@ class Track:
         self.age = 1
         self.time_since_update = 0
 
+        # flag delete
+        self.flag_delete = False
+
         # add bbox, score, class_name
-        self.bbox = bbox
-        self.score = score
-        self.class_name = class_name
+        self.bbox = None
+        self.score = 0.0
+        self.class_name = None
 
         # number_centroid for each moi
         self.list_moi = []
@@ -91,10 +103,24 @@ class Track:
         self.point_in = None 
         self.point_out = None 
 
+        # frame_in and frame_out
+        self.frame_in = None
+        self.frame_out = None
+
+        # vehicle_path (store image has best score)
+        # path_image = vehicle/<cam>/<class>/frame_<cnt_frame>.jpg
+        self.path_image = None
+
+        # bbox in frame
+        self.frame_path = None
+
         self.state = TrackState.Tentative
         self.features = []
         if feature is not None:
             self.features.append(feature)
+
+        # flag recog attribute
+        self.flag_attribute = False
 
         self._n_init = n_init
         self._max_age = max_age
@@ -150,7 +176,7 @@ class Track:
         
         return False
 
-    def update(self, kf, detection, roi_split_region, moi_threshold=5):
+    def update(self, kf, detection, roi_split_region, cnt_frame, cam_name):
         """Perform Kalman filter measurement update step and update the feature
         cache.
 
@@ -168,8 +194,24 @@ class Track:
         
         # add bounding box, class name, score
         self.bbox = detection.to_tlbr()
-        self.score = detection.confidence
-        self.class_name = detection.cls
+        print("vehicle_box: ", self.bbox)
+        if detection.confidence >= self.score:
+            self.score = detection.confidence
+            self.class_name = detection.cls
+            self.flag_attribute = True
+            self.path_image = os.path.join(VEHICLE_IMAGE, cam_name, self.class_name , 'id_{}_frame_{}.jpg'.format(self.track_id, cnt_frame))
+            # crop and save image
+            frame_path = os.path.join(STORE_FRAME, cam_name, "frame_" + str(cnt_frame) +  ".jpg")
+            frame = cv2.imread(frame_path)
+            crop_image = frame[int(self.bbox[1]):int(self.bbox[1])+(int(self.bbox[3]-int(self.bbox[1]))), \
+                                int(self.bbox[0]):int(self.bbox[0])+(int(self.bbox[2]-int(self.bbox[0])))]
+            cv2.imwrite(self.path_image, crop_image)
+        else:
+            # set flag attribute     
+            self.flag_attribute = False
+            
+        # frame path 
+        self.frame_path = os.path.join(STORE_FRAME, cam_name, 'frame_{}.jpg'.format(cnt_frame))
 
         x,y,w,h = self.to_tlwh()
         center_x = int(x+w/2)
@@ -183,6 +225,12 @@ class Track:
         self.point_out = centroid
 
         self.track_line.append(centroid)
+
+        # check frame in 
+        if self.frame_in == None:
+            self.frame_in = cnt_frame
+        
+        self.frame_out = cnt_frame
 
         # check moi
         if len(self.list_moi) == 0:
@@ -218,12 +266,14 @@ class Track:
             # visualize before remove
             try:
                 cv2.circle(image, (int(self.point_out[0]), int(self.point_out[1])), 12, COLOR_LIST[self.moi - 1], -1)
+                self.flag_delete = True
             except:
                 pass
         elif self.time_since_update > self._max_age:
             # visualize before remove
             try:
                 cv2.circle(image, (int(self.point_out[0]), int(self.point_out[1])), 12, COLOR_LIST[self.moi - 1], -1)
+                self.flag_delete = True
             except:
                 pass
 

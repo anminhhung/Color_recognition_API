@@ -4,6 +4,7 @@ import numpy as np
 from . import kalman_filter
 from . import linear_assignment
 from . import iou_matching
+from collections import deque
 from .track import Track
 import cv2
 
@@ -46,6 +47,7 @@ class Tracker:
         self.kf = kalman_filter.KalmanFilter()
         self.tracks = []
         self._next_id = 1
+        self.que_vehicle_out = deque([], 6)
         
         # number counted
         self.counted_track = 0
@@ -61,7 +63,7 @@ class Tracker:
         for track in self.tracks:
             track.predict(self.kf)
 
-    def update(self, detections, roi_split_region, image):
+    def update(self, detections, roi_split_region, cnt_frame, image, cam_name):
         """Perform measurement update and track management.
 
         Parameters
@@ -81,10 +83,21 @@ class Tracker:
         # Update track set.
         for track_idx, detection_idx in matches:
             self.tracks[track_idx].update(
-                self.kf, detections[detection_idx], roi_split_region)
+                self.kf, detections[detection_idx], roi_split_region, cnt_frame, cam_name)
         for track_idx in unmatched_tracks:
             # moi, cnt = self.tracks[track_idx].mark_missed(image)
             self.tracks[track_idx].mark_missed(image)
+            # append track delete
+            if self.tracks[track_idx].flag_delete:
+                # flag = False
+                # for track in self.que_vehicle_out:
+                #     if self.tracks[track_idx].track_id == track.track_id:
+                #         flag = True
+                #         break
+
+                # if flag == False:
+                self.que_vehicle_out.append(self.tracks[track_idx])
+                
             # if moi != -1:
             #     self.list_counted_moi[moi] += cnt 
 

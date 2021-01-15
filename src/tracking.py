@@ -53,9 +53,9 @@ def run_detection(image, list_boxes, list_scores, list_classes, encoder, cfg, ro
 
     return image, detections_in_ROI
 
-def draw_tracking(image, tracker, detections, roi_split_region):
+def draw_tracking(image, tracker, detections, roi_split_region, cnt_frame, cam_name):
     tracker.predict()
-    tracker.update(detections, roi_split_region, image)
+    tracker.update(detections, roi_split_region, cnt_frame, image, cam_name)
 
     list_vehicles_info = []
 

@@ -1,0 +1,58 @@
+.list-group-item {
+  position: relative;
+  display: block;
+  padding: .2rem;
+  background-color: #fff;
+  border: 1px solid rgba(0,0,0,.125);
+}
+
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+
+th, td {
+padding: 5px;
+text-align: left;    
+}
+
+.grid-container {
+  display: grid;
+  margin-right: 0px;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  column-gap: 10px;
+}
+
+.item-mode {
+  color: black;
+  background-color: #3794e0;
+  padding: 0px 50px;
+}
+
+.item-mode {
+  grid-row-start: 1;
+  grid-column-start: 1;
+}
+
+.item-mode-select {
+  grid-row-start: 2;
+  grid-column-start: 1;
+}
+
+.item-mode-select select {
+  width: 100%;
+  background-color: #afd5f0;
+  padding-top: 6px;
+  border: none;
+}
+
+.btn-load{
+  background-color: #DC3545;
+  border: none;
+  color: white;
+  padding: 12px 32px;
+  text-decoration: none;
+  margin: 4px 2px;
+  cursor: pointer;
+}

@@ -1,13 +1,14 @@
 SERVICE:
     SERVICE_IP: "0.0.0.0"
-    TRACKING_PORT: 5050
-    SERVICE_PORT: 5050
+    TRACKING_PORT: 7777
+    SERVICE_PORT: 7777
     CAR_RECOG_PORT: 5002
     COLOR_PORT: 5001
     DETECTION_PORT: 5003
     LOG_PATH: "logfile"
     BACKUP_DIR: "backup"
     STORE_FRAME: "store_frame"
+    VEHICLE_IMAGE: "vehicle"
 
     COLOR_LABELS: ["black", "blue", "brown", "green", "pink", "red", "silver", "white", "yellow"]
     COLOR_MODEL: "models/color_model.h5"
@@ -26,8 +27,3 @@ SERVICE:
     DETECT_URL: 'http://192.168.28.75:5003/predict'
     COLOR_URL: 'http://192.168.28.75:5001/predict'
     CAR_RECOG_URL: 'http://192.168.28.75:5002/predict'
-
-    # DETECT_URL: 'http://0.0.0.0:5003/predict'
-    # COLOR_URL: 'http://0.0.0.0:5001/predict'
-    # CAR_RECOG_URL: 'http://0.0.0.0:5002/predict'
-    # SERVICE_URL: 'http://0.0.0.0:5050/predict'
