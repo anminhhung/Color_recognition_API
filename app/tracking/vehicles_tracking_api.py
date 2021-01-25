@@ -7,6 +7,7 @@ import os
 import io
 import requests
 import imutils
+import itertools
 import random
 import json
 from time import gmtime, strftime
@@ -16,6 +17,7 @@ from flask import Flask, render_template, Response, request, jsonify, Blueprint
 
 from utils.parser import get_config
 from utils.utils import load_class_names, get_image, get_image_tracking, get_crop_track1
+from utils.utils import get_class_vehicle
 
 from src import detect
 from src import run_detection, draw_tracking
@@ -335,6 +337,36 @@ def stream_vehicle1(number_vehicle):
         result = {'code': '609', 'status': RCODE.code_609}
 
     return Response(get_crop_track1(image_path),mimetype='multipart/x-mixed-replace; boundary=frame')
+
+# @tracker.route('/class_vehicle')
+# def index():
+#     return Response(get_class_vehicle(), content_type='text/event-stream')
+
+    # return redirect(url_for('static', filename='index.html'))
+    # return render_template('visual.html')
+
+@tracker.route('/class_vehicle')
+def index():
+    if request.headers.get('accept') == 'text/event-stream':
+        def events():
+            for i, c in enumerate(itertools.cycle('\|/-')):
+                yield "data: %s %d\n\n" % ('class: ', i)
+                time.sleep(.1)  # an artificial delay
+        return Response(events(), content_type='text/event-stream')
+    # return redirect(url_for('static', filename='index.html'))
+    return render_template('visual.html')
+
+@tracker.route('/demo/<number>')
+def index2(number):
+    if request.headers.get('accept') == 'text/event-stream':
+        def events():
+            for i, c in enumerate(itertools.cycle('\|/-')):
+                yield "data: %s %d %d\n\n" % (c, i, int(number))
+                time.sleep(.1)  # an artificial delay
+        return Response(events(), content_type='text/event-stream')
+    # return redirect(url_for('static', filename='index.html'))
+    return render_template('index.html')
+
 
 # if __name__ == "__main__":
 #     app.run(debug=False, host=HOST, port=PORT)

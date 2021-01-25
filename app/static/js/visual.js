@@ -10,6 +10,7 @@ function onLoad(){
 
 function initAllCam(camname){
     $.ajax({
+        // url: 'http://service.aiclub.cs.uit.edu.vn/vehicles_counting/track_video?camname='+camname,
         url: '/track_video?camname='+camname,
         type: 'get',
         dataType: 'json',
@@ -43,32 +44,22 @@ function drawImageOCR(src) {
 $('#btn-visual').click(function () {
     var camname = document.getElementById('list_cams').value;
     if (camname == 'cam1') {
-        document.getElementById("streamcam").src = "http://192.168.28.75:7777/stream1"
+        // document.getElementById("streamcam").src = "http://service.aiclub.cs.uit.edu.vn/vehicles_counting/stream1"
+        document.getElementById("streamcam").src = "http://192.168.28.75:7778/stream1"
     } 
     else {
-        document.getElementById("streamcam").src = "http://192.168.28.75:7777/stream2"
+        // document.getElementById("streamcam").src = "http://service.aiclub.cs.uit.edu.vn/vehicles_counting/stream2"
+        document.getElementById("streamcam").src = "http://192.168.28.75:7778/stream2"
     }
     
     console.log("camid: " + camname);
     initAllCam(camname);
-    // drawImageOCR("/stream?camname=cam1");
-
-    // $.ajax({
-    //     url: '/stream?camname='+camname,
-    //     type: 'get',
-    //     dataType: 'json',
-    //     contentType: 'application/json',  
-    //     success: function (response) {
-    //         if (response['code'] == 1001) {
-    //             alert("[Lỗi] Không nhận được phản hồi từ server, vui lòng kiểm tra lại!");
-    //         }
-    //         drawImageOCR("/stream?camname=cam1");
-    //         console.log("drawIMG");
-    //     }
-    // }).done(function() {
-        
-    // }).fail(function() {
-    //     alert('Fail!');
-    // });
 }
 )
+
+if (!!window.EventSource) {
+    var source = new EventSource('http://service.aiclub.cs.uit.edu.vn/vehicles_counting/class_vehicle');
+    source.onmessage = function(e) {
+      $("#data1").text(e.data);
+    }
+}

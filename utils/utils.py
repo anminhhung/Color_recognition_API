@@ -7,6 +7,7 @@ import numpy as np
 import sys
 from time import gmtime, strftime
 from shapely.geometry import Point, Polygon
+import itertools
 
 LOGO = 'app/static/figure/logo.png'
 
@@ -104,7 +105,7 @@ def get_crop_track1(image_path):
     while True: 
         try:
             image = cv2.imread(image_path)
-            print("IMAGE SIZE: ", image.shape)
+            # print("IMAGE SIZE: ", image.shape)
             imgencode=cv2.imencode('.jpg',image)[1]
             stringData=imgencode.tostring()
 
@@ -112,3 +113,8 @@ def get_crop_track1(image_path):
                 b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
         except:
             pass
+
+def get_class_vehicle():
+   for i, c in enumerate(itertools.cycle('\|/-')):
+        yield "data: %s %d %d\n\n" % (c, i, int(number))
+        time.sleep(.1)  # an artificial delay
