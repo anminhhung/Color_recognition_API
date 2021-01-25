@@ -21,7 +21,7 @@ RUN apt install pkg-config
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
 RUN apt-get install -y libopencv-dev 
 
-RUN . /Vehicle_detection
+COPY . /Vehicle_detection
 
 RUN cd Vehicle_detection && \
 	sed -i "s/OPENCV=0/OPENCV=1/" Makefile &&\
