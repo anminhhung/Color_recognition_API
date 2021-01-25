@@ -43,4 +43,4 @@ WORKDIR /Vehicle_detection
 
 EXPOSE 5003
 
-CMD ["python3", "app.py"]
+CMD ["python3", "vehicles_detection_api.py"]
