@@ -41,6 +41,6 @@ RUN cd Vehicle_detection && \
 
 WORKDIR /Vehicle_detection
 
-EXPOSE 5003
+EXPOSE 7003
 
 CMD ["python3", "vehicles_detection_api.py"]

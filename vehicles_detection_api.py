@@ -40,7 +40,7 @@ class Prediction(BaseModel):
     vehicle_scores: list
     vehicle_classes: list
 
-@app.post('/predict', response_model=Prediction)
+@app.post('/detect_traffic', response_model=Prediction)
 async def predict_car(file: UploadFile = File(...)):
     if file.content_type.startswith('image/') is False:
         raise HTTPException(status_code=400, detail=f'File \'{file.filename}\' is not an image.')
@@ -63,5 +63,5 @@ async def predict_car(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    uvicorn.run("vehicles_detection_api:app", host='0.0.0.0', port=5003)
+    uvicorn.run("vehicles_detection_api:app", host='0.0.0.0', port=7003)
 
