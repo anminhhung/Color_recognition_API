@@ -1,12 +1,3 @@
-function onLoad(){
-    // drawImageOCR("/stream");
-    // initAllCam('cam1');
-    // initAllCam('cam2');
-
-
-    // drawImageOCR("/stream");
-    // drawImageOCR("/stream?camname=cam2");
-}
 
 function initAllCam(camname){
     $.ajax({
@@ -54,12 +45,36 @@ $('#btn-visual').click(function () {
     
     console.log("camid: " + camname);
     initAllCam(camname);
+    setInterval(getVehicleClass, 1000);
 }
 )
 
-if (!!window.EventSource) {
-    var source = new EventSource('http://service.aiclub.cs.uit.edu.vn/vehicles_counting/class_vehicle');
-    source.onmessage = function(e) {
-      $("#data1").text(e.data);
-    }
+function getVehicleClass(){
+    $.ajax({
+        // url: 'http://service.aiclub.cs.uit.edu.vn/vehicles_counting/track_video?camname='+camname,
+        url: '/vehicle_class',
+        type: 'get',
+        dataType: 'json',
+        contentType: 'application/json',  
+        success: function (response) {
+            if (response['code'] == 1001) {
+                alert("[Lỗi] Không nhận được phản hồi từ server, vui lòng kiểm tra lại!");
+            }
+            list_class = response['list_class'];
+            console.log(list_class);
+            document.getElementById("class_crop1").innerHTML ="Class: " + list_class[0];
+            document.getElementById("class_crop2").innerHTML ="Class: " + list_class[1];
+            document.getElementById("class_crop3").innerHTML ="Class: " + list_class[2];
+            document.getElementById("class_crop4").innerHTML ="Class: " + list_class[3];
+        }
+    }).done(function() {
+        
+    }).fail(function() {
+        alert('Fail!');
+    });
 }
+
+
+
+// call function
+// setInterval(getVehicleClass, 1000);

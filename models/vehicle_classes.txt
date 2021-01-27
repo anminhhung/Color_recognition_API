@@ -1,5 +1,9 @@
-LOAI_1
-LOAI_2
-LOAI_3
-LOAI_4
-LOAI_5
+xe_may
+xe_taxi
+xe_oto
+xe_bantai
+xe_cuuthuong
+xe_khach
+xe_bus
+xe_tai
+xe_container

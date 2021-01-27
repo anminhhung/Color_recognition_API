@@ -4,7 +4,7 @@ SERVICE:
     SERVICE_PORT: 7778
     CAR_RECOG_PORT: 5002
     COLOR_PORT: 5001
-    DETECTION_PORT: 5003
+    DETECTION_PORT: 7003
     LOG_PATH: "logfile"
     BACKUP_DIR: "backup"
     STORE_FRAME: "store_frame"
@@ -24,6 +24,7 @@ SERVICE:
     VEHICLE_CLASS: "models/vehicle_classes.txt" 
     DEVICE: 'cpu'
 
-    DETECT_URL: 'http://192.168.28.75:5003/predict'
+    # DETECT_URL: 'http://192.168.28.75:5003/predict'
+    DETECT_URL: 'http://service.aiclub.cs.uit.edu.vn/hungma/vehicles_predict_yolov4/detect_traffic'
     COLOR_URL: 'http://192.168.28.75:5001/predict'
     CAR_RECOG_URL: 'http://192.168.28.75:5002/predict'
