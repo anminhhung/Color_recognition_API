@@ -17,7 +17,7 @@ from flask import Flask, render_template, Response, request, jsonify, Blueprint
 
 from utils.parser import get_config
 from utils.utils import load_class_names, get_image, get_image_tracking, get_crop_track1
-from utils.utils import get_class_vehicle
+from utils.utils import create_white_image_with_text, horizontal_merge, vertical_merge
 
 from src import detect
 from src import run_detection, draw_tracking
@@ -170,7 +170,9 @@ def predict_video():
                 # add vehicle path
                 if crop_vehicle_path != 'None':
                     crop_img_vehicle = cv2.imread(crop_vehicle_path)
-                    crop_img_vehicle = imutils.resize(crop_img_vehicle, width=50)
+                    # crop_img_vehicle = imutils.resize(crop_img_vehicle, width=50)
+                    white_image = create_white_image_with_text()
+                    crop_img_vehicle = vertical_merge(crop_img_vehicle, white_image)
                     cv2.imwrite("vehicle/crop{}/vehicle.jpg".format(i+1), crop_img_vehicle)
             
             print("LIST CLASS OUT: ", LIST_CLASS_OUT)

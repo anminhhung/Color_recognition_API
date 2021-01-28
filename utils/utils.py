@@ -1,5 +1,5 @@
-import cv2 
-import os 
+import cv2
+import os
 import requests
 import time
 import random
@@ -11,8 +11,9 @@ import itertools
 
 LOGO = 'app/static/figure/logo.png'
 
+
 def draw_ROI(img, moi, roi_split_region):
-    color_list = [(255,0,255), (255,100,0), (0,255,0), (139, 69, 19), (132, 112, 255), (0, 154, 205), (0, 255, 127), (238, 180, 180),
+    color_list = [(255, 0, 255), (255, 100, 0), (0, 255, 0), (139, 69, 19), (132, 112, 255), (0, 154, 205), (0, 255, 127), (238, 180, 180),
                   (0, 100, 0), (238, 106, 167), (221, 160, 221), (0, 128, 128)]
 
     # moi = [[[549, 144], [297, 505]], [[925, 487], [715, 144]]]
@@ -31,23 +32,26 @@ def draw_ROI(img, moi, roi_split_region):
     # plot MOI
     # plot MOI
     for i in moi:
-        moi_startX.append (i[0][0])
-        moi_startY.append (i[0][1])
-        moi_endX.append (i[1][0])
-        moi_endY.append (i[1][1])
-    
-    for i in range (len(moi_startX)):
-        cv2.arrowedLine(img, (moi_startX[i], moi_startY[i]), (moi_endX[i], moi_endY[i]), color_list[i], thickness=2, tipLength=0.03)
+        moi_startX.append(i[0][0])
+        moi_startY.append(i[0][1])
+        moi_endX.append(i[1][0])
+        moi_endY.append(i[1][1])
 
-    return img 
+    for i in range(len(moi_startX)):
+        cv2.arrowedLine(img, (moi_startX[i], moi_startY[i]), (
+            moi_endX[i], moi_endY[i]), color_list[i], thickness=2, tipLength=0.03)
+
+    return img
+
 
 def load_class_names(filename):
     with open(filename, 'r', encoding='utf8') as f:
         classes = [line.strip() for line in f.readlines()]
     return classes
 
+
 def get_frame(video_file, URL):
-    camera=cv2.VideoCapture(video_file)
+    camera = cv2.VideoCapture(video_file)
 
     while True:
         retval, im = camera.read()
@@ -59,30 +63,33 @@ def get_frame(video_file, URL):
         img_path = os.path.join('backup', img_name)
         cv2.imwrite(img_path, im)
 
-        response = requests.post(URL, files={"file": (img_name, open(img_path, "rb"), "image/jpeg")}).json()
+        response = requests.post(URL, files={"file": (
+            img_name, open(img_path, "rb"), "image/jpeg")}).json()
 
         image_path = response['visual_path']
         image = cv2.imread(image_path)
 
-        imgencode=cv2.imencode('.jpg',image)[1]
-        
-        stringData=imgencode.tostring()
+        imgencode = cv2.imencode('.jpg', image)[1]
+
+        stringData = imgencode.tostring()
 
         yield (b'--frame\r\n'
-            b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
+               b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
 
     del(camera)
+
 
 def get_image(image_path):
     # image_path = os.path.join("backup", filename)
     # image = cv2.imread(image_path)
     while True:
         image = cv2.imread(image_path)
-        imgencode=cv2.imencode('.jpg',image)[1]
-        stringData=imgencode.tostring()
+        imgencode = cv2.imencode('.jpg', image)[1]
+        stringData = imgencode.tostring()
 
         yield (b'--frame\r\n'
-            b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
+               b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
+
 
 def get_image_tracking(image_path):
     # image_path = os.path.join("backup", filename)
@@ -91,30 +98,64 @@ def get_image_tracking(image_path):
         try:
             image = cv2.imread(image_path)
             image = cv2.resize(image, (480, 270))
-            imgencode=cv2.imencode('.jpg',image)[1]
-            stringData=imgencode.tostring()
+            imgencode = cv2.imencode('.jpg', image)[1]
+            stringData = imgencode.tostring()
 
             yield (b'--frame\r\n'
-                b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
+                   b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
         except:
             pass
+
 
 def get_crop_track1(image_path):
     # image_path = os.path.join("backup", filename)
     # image = cv2.imread(image_path)
-    while True: 
+    while True:
         try:
             image = cv2.imread(image_path)
             # print("IMAGE SIZE: ", image.shape)
-            imgencode=cv2.imencode('.jpg',image)[1]
-            stringData=imgencode.tostring()
+            imgencode = cv2.imencode('.jpg', image)[1]
+            stringData = imgencode.tostring()
 
             yield (b'--frame\r\n'
-                b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
+                   b'Content-Type: text/plain\r\n\r\n'+stringData+b'\r\n')
         except:
             pass
 
-def get_class_vehicle():
-   for i, c in enumerate(itertools.cycle('\|/-')):
-        yield "data: %s %d %d\n\n" % (c, i, int(number))
-        time.sleep(.1)  # an artificial delay
+
+def create_white_image_with_text(class_name='Unknown', type_name='Unknown', color_name='Unknown',\
+                                 moi='Unknown', height=140, width=200):
+    white_image = np.zeros((height, width, 3), dtype=np.uint8)
+    height, width, c = white_image.shape
+    for i in range(height):
+        for j in range(width):
+            white_image[i][j][0] = 255
+            white_image[i][j][1] = 255
+            white_image[i][j][2] = 255
+
+    cv2.putText(white_image, 'Class: ' + class_name, (2, 30), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 0), 1)
+    cv2.putText(white_image, 'Type: ' + type_name, (2, 65), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 0), 1)
+    cv2.putText(white_image, 'Color: ' + color_name, (2, 100), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 0), 1)
+    cv2.putText(white_image, 'MOI: ' + moi, (2, 130), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 0), 1)
+
+    return white_image
+
+
+def horizontal_merge(image, info_image, width=140, height=250):
+    image = cv2.resize(image, (height, width))
+    info_image = cv2.resize(info_image, (height, width))
+    result = cv2.hconcat([image, info_image])
+
+    return result
+
+
+def vertical_merge(image, info_image, width=140, height=250):
+    '''
+      input: image, info_image (image with information), size
+      output: merge_image (vertical)
+    '''
+    image = cv2.resize(image, (height, width))
+    info_image = cv2.resize(info_image, (height, width))
+    result = cv2.vconcat([image, info_image])
+
+    return result
