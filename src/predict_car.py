@@ -2,7 +2,7 @@ import cv2
 import numpy as np 
 
 def predict(image, model, labels):
-    image = cv2.resize(image, (150, 150))
+    image = cv2.resize(image, (224, 224))
     x = np.expand_dims(image, axis=0)
 
     result = model.predict(x, batch_size=1)

@@ -9,7 +9,5 @@ fastapi==0.61.1
 pydantic
 uvicorn
 python-multipart==0.0.5
-torch==1.6.0
-torchvision==0.7.0
 aiofiles==0.5.0
 gdown
