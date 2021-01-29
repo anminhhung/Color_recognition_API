@@ -13,9 +13,9 @@ RUN cd vehicles_recognition && \
     pip3 install -r requirements.txt &&\
     mkdir models &&\ 
     cd models &&\
-    gdown --id 11VJ5gsAdYu0LtCWKZYKMz76BRzPMChDr &&\
-    gdown --id 1DP2kHKfY7Ua8qB4HU-t8lFnI4DnolIYH &&\
-    gdown --id 1o7EYuJYwbMdGacRTtSSOOUppWqZH3-Y8
+    gdown --id 1CUgExRR225igNqrlmIDV9fHy08oD87mm &&\
+    gdown --id 1-0JFpymC1eyMPmfA4DFfwhtW7lx9Q31Q &&\
+    gdown --id 11GQFH5UFf-assuEshRWHphwxNgJ-uZqD
 
 WORKDIR /vehicles_recognition
 

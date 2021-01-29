@@ -5,11 +5,11 @@ SERVICE:
     LOG_PATH: "logfile"
     BACKUP_DIR: "backup"
 
-    COLOR_LABELS: ["black", "blue", "brown", "green", "pink", "red", "silver", "white", "yellow"]
+    COLOR_LABELS: ["white", "green", "gray", "red", "blue", "black", "brown", "yellow"]
     COLOR_MODEL: "models/color_model.h5"
 
-    CAR_RECOG_JSON: "models/MobileNets_car_recognition.json"
-    CAR_RECOG_WEIGHTS: "models/car_recognition.h5"
+    CAR_RECOG_JSON: "models/EfficientNetB0_200epoch.json"
+    CAR_RECOG_WEIGHTS: "models/EfficientNetB0_200epoch.h5"
     CAR_RECOG_LABELS: "models/car_recognition_labels.txt"
 
     DETECT_WEIGHT: "models/detector.pth"
