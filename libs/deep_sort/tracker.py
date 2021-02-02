@@ -37,7 +37,7 @@ class Tracker:
         The list of active tracks at the current time step.
 
     """
-
+    # dem thi lam cai count ngay khuc delete
     def __init__(self, metric, max_iou_distance=0.85, max_age=3, n_init=2):
         self.metric = metric
         self.max_iou_distance = max_iou_distance

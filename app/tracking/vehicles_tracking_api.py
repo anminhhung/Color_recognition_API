@@ -17,7 +17,7 @@ from flask import Flask, render_template, Response, request, jsonify, Blueprint
 
 from utils.parser import get_config
 from utils.utils import load_class_names, get_image, get_image_tracking, get_crop_track1
-from utils.utils import create_white_image_with_text, horizontal_merge, vertical_merge
+from utils.utils import create_white_image_with_text, horizontal_merge, vertical_merge, predict_color
 
 from src import detect
 from src import run_detection, draw_tracking
@@ -119,10 +119,18 @@ def predict_video():
         for class_name in CLASSES:
             os.mkdir(os.path.join(VEHICLE_IMAGE, cam_name, class_name))
 
-    cap = cv2.VideoCapture("images/cam1.mp4")
+    cap = cv2.VideoCapture("images/{}.mp4".format(cam_name))
     cnt_frame = 0
+    # frame_width = int(cap.get(3))
+    # frame_height = int(cap.get(4))
+
+    # print(frame_width, frame_height)
+
+    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # out = cv2.VideoWriter('output.avi',fourcc, 30, (frame_width,frame_height)) 
     while True:
         try:
+            start_time = time.time()
             ret, frame = cap.read()
             _frame = frame.copy()
 
@@ -135,11 +143,17 @@ def predict_video():
 
             image_detect_path = os.path.join(BACKUP, "video_frame.jpg")
 
-            # draw cam's moi and roi 
-            moi = cfg.CAM1.MOI
-            roi_split_region = cfg.CAM1.ROI_SPLIT_REGION
-            frame = draw_ROI(frame, moi, roi_split_region)
-            cv2.imwrite(image_detect_path, frame)
+            # draw cam's moi and roi
+            if cam_name == 'cam1':
+                moi = cfg.CAM1.MOI
+                roi_split_region = cfg.CAM1.ROI_SPLIT_REGION
+                frame = draw_ROI(frame, moi, roi_split_region)
+                cv2.imwrite(image_detect_path, frame)
+            elif cam_name == 'cam2':
+                moi = cfg.CAM2.MOI
+                roi_split_region = cfg.CAM2.ROI_SPLIT_REGION
+                frame = draw_ROI(frame, moi, roi_split_region)
+                cv2.imwrite(image_detect_path, frame)
 
             # detection 
             detect_response = requests.post(DETECT_URL, files={"file": ("filename", open(image_detect_path, "rb"), "image/jpeg")}).json()
@@ -150,39 +164,13 @@ def predict_video():
             image, detections = run_detection(frame, vehicle_boxes, vehicle_scores, vehicle_classes, ENCODER, cfg, roi_split_region)
             # tracking
             image, list_vehicle_info, tracker = draw_tracking(image, TRACKER, detections, roi_split_region, cnt_frame, cam_name)
-
-            LIST_VEHICLE_OUT = tracker.que_vehicle_out
-            print("##################")
-            for i in range(len(LIST_VEHICLE_OUT)):
-                if i>=len(LIST_VEHICLE_OUT_PATH):
-                    LIST_VEHICLE_OUT_PATH[len(LIST_VEHICLE_OUT_PATH)-1] = LIST_VEHICLE_OUT[i].path_image
-                    LIST_CLASS_OUT[len(LIST_CLASS_OUT)-1] = LIST_VEHICLE_OUT[i].class_name
-
-                    crop_vehicle_path = LIST_VEHICLE_OUT_PATH[len(LIST_VEHICLE_OUT_PATH)-1]
-                    # crop_vehicle_class = LIST_CLASS_OUT[len(LIST_VEHICLE_OUT)-1] 
-                else:
-                    LIST_VEHICLE_OUT_PATH[i] = LIST_VEHICLE_OUT[i].path_image
-                    LIST_CLASS_OUT[i] = LIST_VEHICLE_OUT[i].class_name
-
-                    crop_vehicle_path = LIST_VEHICLE_OUT_PATH[i]
-                    # crop_vehicle_class = LIST_CLASS_OUT[i]
-                
-                # add vehicle path
-                if crop_vehicle_path != 'None':
-                    crop_img_vehicle = cv2.imread(crop_vehicle_path)
-                    # crop_img_vehicle = imutils.resize(crop_img_vehicle, width=50)
-                    white_image = create_white_image_with_text()
-                    crop_img_vehicle = vertical_merge(crop_img_vehicle, white_image)
-                    cv2.imwrite("vehicle/crop{}/vehicle.jpg".format(i+1), crop_img_vehicle)
-            
-            print("LIST CLASS OUT: ", LIST_CLASS_OUT)
-            print("len list vehicle out path: ", LIST_VEHICLE_OUT_PATH)
-            print("##################")
+            # out.write(cv2.imread(image))
+            # print("##################")
             # query cam
-            print("##################")
+            # print("##################")
             cam = Camera.query.filter_by(cam_name=cam_name).first()
-            print("Cam: ", cam)
-            print("##################")
+            # print("Cam: ", cam)
+            # print("##################")
 
             # add InfoCam db here
             if tracker.counted_track != 0:
@@ -272,9 +260,14 @@ def predict_video():
                     
                     if track.flag_attribute == True:
                         # attribute recognition
-                        car_response = requests.post(CAR_RECOG_URL, files={"file": ("filename", open(track.path_image, "rb"), "image/jpeg")}).json()
-                        attribute = car_response['vehicle_name']
+                        if track.class_name == 'xe_may' or track.class_name == 'xe_cuuthuong' or track.class_name == 'xe_khach':
+                            attribute = 'Unknown'
+                        else:
+                            car_response = requests.post(CAR_RECOG_URL, files={"file": ("filename", open(track.path_image, "rb"), "image/jpeg")}).json()
+                            attribute = car_response['vehicle_name']
+
                         car_type = Type.query.filter_by(vehicle_id=vehicle_id).first()
+                        track.vehicle_type = attribute
                         if car_type == None:
                             # add type table
                             record = Type(vehicle_type=attribute, vehicle_id=vehicle_id)
@@ -285,9 +278,14 @@ def predict_video():
                             db.session.commit()
 
                         # color recognition
-                        color_response = requests.post(COLOR_URL, files={"file": ("filename", open(track.path_image, "rb"), "image/jpeg")}).json()
-                        color  = color_response['color']
+                        if track.class_name == 'xe_may':
+                            color = 'Unknown'
+                        else:
+                            color_response = requests.post(COLOR_URL, files={"file": ("filename", open(track.path_image, "rb"), "image/jpeg")}).json()
+                            color  = color_response['color']
+
                         car_color = Color.query.filter_by(vehicle_id=vehicle_id).first()
+                        track.vehicle_color = color
                         if car_color == None:
                             # add color table
                             record = Color(vehicle_color=color, vehicle_id=vehicle_id)
@@ -298,6 +296,40 @@ def predict_video():
                             db.session.commit()
 
                         print("add attribute")
+
+            LIST_VEHICLE_OUT = tracker.que_vehicle_out
+            print("##################")
+            for i in range(len(LIST_VEHICLE_OUT)):
+                if i>=len(LIST_VEHICLE_OUT_PATH):
+                    LIST_VEHICLE_OUT_PATH[len(LIST_VEHICLE_OUT_PATH)-1] = LIST_VEHICLE_OUT[i].path_image
+                    # LIST_CLASS_OUT[len(LIST_CLASS_OUT)-1] = LIST_VEHICLE_OUT[i].class_name
+
+                    crop_vehicle_path = LIST_VEHICLE_OUT_PATH[len(LIST_VEHICLE_OUT_PATH)-1]
+                    # crop_vehicle_class = LIST_CLASS_OUT[len(LIST_VEHICLE_OUT)-1] 
+                else:
+                    LIST_VEHICLE_OUT_PATH[i] = LIST_VEHICLE_OUT[i].path_image
+                    # LIST_CLASS_OUT[i] = LIST_VEHICLE_OUT[i].class_name
+
+                    crop_vehicle_path = LIST_VEHICLE_OUT_PATH[i]
+                    # crop_vehicle_class = LIST_CLASS_OUT[i]
+                
+                crop_vehicle_class = LIST_VEHICLE_OUT[i].class_name
+                crop_vehicle_moi = str(LIST_VEHICLE_OUT[i].moi)
+                crop_vehicle_color = LIST_VEHICLE_OUT[i].vehicle_color
+                crop_vehicle_type = LIST_VEHICLE_OUT[i].vehicle_type
+                # print("crop_vehicle_color: ", crop_vehicle_color)
+                # print("crop_vehicle_type: ", crop_vehicle_type)
+                # add vehicle path
+                if crop_vehicle_path != 'None':
+                    crop_img_vehicle = cv2.imread(crop_vehicle_path)
+                    # crop_img_vehicle = imutils.resize(crop_img_vehicle, width=50)
+                    white_image = create_white_image_with_text(crop_vehicle_class, crop_vehicle_type, crop_vehicle_color, crop_vehicle_moi)
+                    crop_img_vehicle = vertical_merge(crop_img_vehicle, white_image)
+                    cv2.imwrite("vehicle/crop{}/vehicle.jpg".format(i+1), crop_img_vehicle)
+            
+            # print("LIST CLASS OUT: ", LIST_CLASS_OUT)
+            # print("len list vehicle out path: ", LIST_VEHICLE_OUT_PATH)
+            print("FPS: ", 1.0 / (time.time() - start_time))
         except Exception as e:
             print(e)
             cnt_frame += 1

@@ -1,8 +1,8 @@
 
 function initAllCam(camname){
     $.ajax({
-        // url: 'http://service.aiclub.cs.uit.edu.vn/vehicles_counting/track_video?camname='+camname,
-        url: '/track_video?camname='+camname,
+        url: 'http://service.aiclub.cs.uit.edu.vn/vehicles_counting/track_video?camname='+camname,
+        // url: '/track_video?camname='+camname,
         type: 'get',
         dataType: 'json',
         contentType: 'application/json',  
@@ -35,12 +35,14 @@ function drawImageOCR(src) {
 $('#btn-visual').click(function () {
     var camname = document.getElementById('list_cams').value;
     if (camname == 'cam1') {
+        document.getElementById("streamcam").src = "http://service.aiclub.cs.uit.edu.vn/vehicles_counting/stream1";
         // document.getElementById("streamcam").src = "http://192.168.28.75:7778/stream1"
-        document.getElementById("streamcam").src = "http://0.0.0.0:7778/stream1"
+        // document.getElementById("streamcam").src = "http://0.0.0.0:7778/stream1"
     } 
     else {
+        document.getElementById("streamcam").src = "http://service.aiclub.cs.uit.edu.vn/vehicles_counting/stream2";
         // document.getElementById("streamcam").src = "http://192.168.28.75:7778/stream2"
-        document.getElementById("streamcam").src = "http://0.0.0.0:7778/stream2"
+        // document.getElementById("streamcam").src = "http://0.0.0.0:7778/stream2"
     }
     
     console.log("camid: " + camname);
@@ -51,8 +53,8 @@ $('#btn-visual').click(function () {
 
 function getVehicleClass(){
     $.ajax({
-        // url: 'http://service.aiclub.cs.uit.edu.vn/vehicles_counting/track_video?camname='+camname,
-        url: '/vehicle_class',
+        url: 'http://service.aiclub.cs.uit.edu.vn/vehicles_counting/track_video?camname='+camname,
+        // url: '/vehicle_class',
         type: 'get',
         dataType: 'json',
         contentType: 'application/json',  

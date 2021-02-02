@@ -124,7 +124,7 @@ def get_crop_track1(image_path):
 
 
 def create_white_image_with_text(class_name='Unknown', type_name='Unknown', color_name='Unknown',\
-                                 moi='Unknown', height=140, width=200):
+                                 moi='Unknown', height=140, width=250):
     white_image = np.zeros((height, width, 3), dtype=np.uint8)
     height, width, c = white_image.shape
     for i in range(height):
@@ -159,3 +159,27 @@ def vertical_merge(image, info_image, width=140, height=250):
     result = cv2.vconcat([image, info_image])
 
     return result
+
+def predict_color(model, image, crop_size=50):
+    height, width = image.shape[:2]
+    x_center = int(width/2)
+    y_center = int(height/2)
+    x_min = x_center - crop_size
+    y_min = y_center - crop_size
+    x_max = x_center + crop_size
+    y_max = y_center + crop_size
+    crop_image = image[int(y_min):int(y_max), int(x_min):int(x_max)]
+    b, g, r = cv2.split(crop_image)
+
+    b_hist = cv2.calcHist([b], [0], None, [256], [0, 256])
+    g_hist = cv2.calcHist([g], [0], None, [256], [0, 256])
+    r_hist = cv2.calcHist([r], [0], None, [256], [0, 256])
+
+    elem_b = numpy.argmax(b_hist)
+    elem_g = numpy.argmax(g_hist)
+    elem_r = numpy.argmax(r_hist)
+
+    elem_array = numpy.array([[elem_r, elem_g, elem_b]])
+    y_pred = model.predict(elem_array)
+
+    return y_pred

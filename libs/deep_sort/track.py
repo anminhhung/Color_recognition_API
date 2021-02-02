@@ -88,6 +88,10 @@ class Track:
         # flag delete
         self.flag_delete = False
 
+        # attribute
+        self.vehicle_color = 'Unknown'
+        self.vehicle_type = 'Unknown'
+
         # add bbox, score, class_name
         self.bbox = None
         self.score = 0.0
